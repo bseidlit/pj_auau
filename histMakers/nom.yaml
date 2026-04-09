@@ -1,0 +1,224 @@
+#config.yaml
+#var from nomtestv5, adding pT dependent weta, wphi cut and et1 cut, rm et2, et3
+input:
+  photon_jet_file_root_dir: "/sphenix/u/bseidlitz/work/ppg14/trees/"
+  photon_jet_file_branch_dir: "/caloana_with_bdt.root"
+  data_file: "/sphenix/user/shuhangli/ppg12/anatreemaker/macro_maketree/data/ana521/condorout/part_*_with_bdt.root"
+  data_file_aa: "/sphenix/u/bseidlitz/work/ppg14/trees/data_aa/out*_with_bdt.root"
+  data_file_pp: "/sphenix/user/shuhangli/ppg12/anatreemaker/macro_maketree/data/ana521/condorout/out*_with_bdt.root"
+  tree: "slimtree"
+  cluster_node_name: "CLUSTERINFO_CEMC"
+  bdt_model_name: "base_v3E"
+  unfold_input: "results/MC_efficiency_photon5.root"
+
+output:
+  eff_outfile: "/sphenix/u/bseidlitz/work/pj_auau/histMakers/results/MC_efficiency"
+  response_outfile: "/sphenix/u/bseidlitz/work/pj_auau/histMakers/results/MC_response"
+  data_outfile:  "/sphenix/u/bseidlitz/work/pj_auau/histMakers/results/data_histo"
+  var_type: "showershape"
+  final_outfile: "/sphenix/u/bseidlitz/work/pj_auau/histMakers/results/Photon_final"
+  evt_character_outfile: "/sphenix/u/bseidlitz/work/pj_auau/histMakers/results/evt_character"
+
+analysis:
+  isbackground: 0
+  eta_bins: [-0.7, 0.7]
+  vertex_cut: 30.0
+  truth_iso_max: 4.0
+  #iso ET
+  cone_size: 3
+  reco_iso_min: -20.0
+  reco_iso_max_b: 3.0
+  reco_iso_max_s: 0.0299107
+  reco_iso_max_cent_coeff: [0,0,0]
+  reco_noniso_min_shift: 0.0
+  reco_noniso_max: 100.0
+  iso_threshold: 1
+  iso_hcalonly: 0
+  iso_emcalinnerr: 0.0
+  reco_min_ET: 9.0
+  eff_dR: 0.1
+  trigger_used: [12,30,22]
+  pT_bins: [15, 20, 30]
+  pT_bins_truth:  [12,15,20,25,30,35]
+  centrality_bins: [0, 20, 50, 80]
+  xjgamma_bins: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0 , 2.5]
+  jet_cone_size: 3
+  b2bjet_pT_min: 8.0
+  b2bjet_dphi: 2.749
+  jet_eta: 0.8
+  # Non-physical background (NPB) veto (match RecoEffCalculator_TTreeReader.C)
+  npb_cut_on: 0
+  npb_weta_min: 0.4
+  # For ShowerShapeCheck: NPB bad-time uses cluster-MBD time (ns)
+  npb_delta_t_cut: -7.0 
+  vertex_reweight_on: 0
+  vertex_reweight_file: "results/vertex_reweight.root"
+  centrality_reweight_on: 1
+  centrality_reweight_file: "../reweightingDer/output/centrality_reweighting.root"
+
+  # Run-by-run MBD t0 correction (data only)
+  mbd_t0_correction_on: 0
+  mbd_t0_correction_file: "/sphenix/user/shuhangli/ppg12/efficiencytool/MbdOut.corr"
+
+  n_nt_fail: 2
+  weta_fail: 0
+  wphi_fail: 0
+  et1_fail: 0
+  e11_to_e33_fail: 0
+  e32_to_e35_fail: 0
+  bdt_fail: 0
+  weta_on: 1
+  wphi_on: 1
+  et1_on: 1
+  e11_to_e33_on: 1
+  e32_to_e35_on: 1
+  bdt_on: 0
+  npb_score_cut: 0.5
+
+  tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_min: 0.00
+    rhad33_max: 1.0
+
+    w72_min: 0.0
+    w72_max: 1.0
+
+    re11_E_min: 0.0
+    re11_E_max: 1.0
+
+    CNN_min: 0.0
+    CNN_max: 1.0
+
+    #correlation
+    et1_min: 0.5
+    et1_max: 1.0
+    et1_min_b: 0.80
+    et1_min_s: 0.0
+
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.9
+
+    #correlation
+    weta_cogx_max: 0.2
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 0.4
+    weta_cogx_max_s: 0.0
+
+
+    wphi_cogx_max: 2.0
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 0.6
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.2
+
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    et2_max: 1.0
+    et2_min: 0.0
+
+    et3_max: 1.0
+    et3_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 1.0
+    bdt_min: 0.0
+
+
+  non_tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_max: 1.0
+    rhad33_min: 0.00
+
+    w72_max: 1.0
+    w72_min: 0.0
+
+    re11_E_max: 1.0
+    re11_E_min: 0.0
+
+    CNN_max: 1.0
+    CNN_min: 0.0
+    #correlation
+    et1_max: 1.0
+    et1_min: 0.6
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    #correlation
+    weta_cogx_max: 0.6
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 0.6
+    weta_cogx_max_s: 0.0
+
+    wphi_cogx_max: 0.8
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 1.8
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+  
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 1.0
+    bdt_min: 0.0
+
+  common:
+    wr_cogx_bound: 2.0
+    cluster_weta_cogx_bound: 2.0
+
+    prob_max: 1.0
+    prob_min: 0.0
+
+    e11_over_e33_max: 0.98
+    e11_over_e33_min: 0.0
+
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    et1_max: 1.0
+    et1_min: 0.6
+
+
+
+
+
+
+  unfold:
+    resultit: 2
+    resultleak: 1
+    reweight: 0
+
+
+
+

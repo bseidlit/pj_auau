@@ -1,0 +1,5 @@
+ root -q "ShowerShapeCheck.C(\"nom.yaml\",\"data_aa\")"
+#root -q "ShowerShapeCheck.C(\"nom.yaml\",\"photon10_aa\")"
+#root -q "ShowerShapeCheck.C(\"nom.yaml\",\"jet10_aa\")"
+#root -q "ShowerShapeCheck.C(\"nom.yaml\",\"photon20_aa\")"
+#root -q "ShowerShapeCheck.C(\"nom.yaml\",\"jet20_aa\")"

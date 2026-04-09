@@ -1,0 +1,60 @@
+# Compiled source #
+###################
+*.pcm
+*.so
+*.d
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Data files #
+##############
+*.root
+*.dat
+*.txt
+*.pdf
+*.png
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.xml
+*blx.bib
+*DS_Store
+*.toc
+*.eps
+DATA
+log
+
+# Condor files #
+################
+/02AnaCorr/Condor/*.h
+
+# Other files #
+figs
+
+
+autom4te.cache
+aclocal.m4
+compile
+configure
+depcomp
+install-sh
+missing
+stamp-h1
+Makefile.in
+config.sub
+ltmain.sh
+config.guess
