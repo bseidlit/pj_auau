@@ -134,7 +134,7 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
     {
         max_photon_lower = 10;
         max_photon_upper = 20;
-        weight = photon10cross / photon20cross;
+        weight = photon10cross / photon20cross /0.045;
     }
     else if (filetype_base == "photon20")
     {
@@ -147,7 +147,7 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         max_jet_lower = 10;
         max_jet_upper = 20;
         cluster_ET_upper = 23;
-        weight = jet12cross / jet50cross;
+        weight = jet10cross / jet20cross;
         //isbackground = true;
     }
     else if (filetype_base == "jet20")
@@ -155,7 +155,7 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         max_jet_lower = 20;
         max_jet_upper = 100;
         cluster_ET_upper = 100;
-        weight = jet10cross / jet50cross;
+        weight = 1.0;
         //isbackground = true;
     }
 
@@ -941,6 +941,9 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
     // response vs. isoET
     std::vector<std::vector<TH2D *>> h_response_isoET;
     h_response_isoET.resize(n_cent_bins);
+    // |DeltaPhi|(cluster, jet), tight clusters only — same kinematics as EvtCharacter.C dphi block
+    std::vector<std::vector<TH1D *>> h_dphi_clusterJets_tight;
+    h_dphi_clusterJets_tight.resize(n_cent_bins);
 
     // Standard efficiencies and spectra binned by centrality (eta only as acceptance cut)
     for (int icent = 0; icent < n_cent_bins; icent++)
@@ -1050,6 +1053,12 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
             h_iso_truth_reco[icent].push_back(new TH2D(Form("h_iso_truth_reco_cent%d_pt%d", icent, ipt), Form("Iso Truth Reco %.0f-%.0f%% cent %.1f < pT < %.1f", centrality_bins[icent], centrality_bins[icent + 1], pT_bin_edges[ipt], pT_bin_edges[ipt + 1]), 300, 0, 30, 1000, -50, 50));
             h_background_iso_truth_reco[icent].push_back(new TH2D(Form("h_background_iso_truth_reco_cent%d_pt%d", icent, ipt), Form("Background Truth Iso ET %.0f-%.0f%% cent %.1f < pT < %.1f", centrality_bins[icent], centrality_bins[icent + 1], pT_bin_edges[ipt], pT_bin_edges[ipt + 1]), 300, 0, 30, 1000, -50, 50));
             h_response_isoET[icent].push_back(new TH2D(Form("h_response_isoET_cent%d_pt%d", icent, ipt), Form("Response Iso ET %.0f-%.0f%% cent %.1f < pT < %.1f", centrality_bins[icent], centrality_bins[icent + 1], pT_bin_edges[ipt], pT_bin_edges[ipt + 1]), 150, 0, 1.5, 1000, -50, 50));
+            h_dphi_clusterJets_tight[icent].push_back(new TH1D(
+                Form("h_dphi_clusterJets_tight_cent%d_pt%d", icent, ipt),
+                Form("Tight |#Delta#phi|(cluster, jet) (xj#gamma reco jets: |#eta|<cut, |#Delta#phi|>b2b, p_{T}^{cal}>min) %.0f-%.0f%% cent, %.0f < E_{T}^{clus} < %.0f GeV;|#Delta#phi|;Pairs",
+                     centrality_bins[icent], centrality_bins[icent + 1], pT_bin_edges[ipt], pT_bin_edges[ipt + 1]),
+                64, 0, M_PI));
+            h_dphi_clusterJets_tight[icent][ipt]->Sumw2();
         }
     }
 
@@ -1828,6 +1837,43 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                     is_bdt_tight)
                 {
                     tight = true;
+
+                    // |DeltaPhi|(cluster, jet) for tight clusters — reco jets as xjγ (b2bjet_pT); exclude ΔR(cluster,jet) ≤ 0.2
+                    int pTbin_dphi = -1;
+                    for (int ipt = 0; ipt < n_pT_bins; ipt++)
+                    {
+                        if (clusterET >= pT_bins[ipt] && clusterET < pT_bins[ipt + 1])
+                        {
+                            pTbin_dphi = ipt;
+                            break;
+                        }
+                    }
+
+                    const float dphi_cluster_jet_dR_min = 0.2f;
+                    if (pTbin_dphi >= 0)
+                    {
+                        for (int ijet = 0; ijet < *njet; ijet++)
+                        {
+                            float jdphi = cluster_Phi[icluster] - jet_Phi[ijet];
+                            while (jdphi > M_PI)
+                                jdphi = jdphi - 2 * M_PI;
+                            while (jdphi < -M_PI)
+                                jdphi = jdphi + 2 * M_PI;
+
+                            const float deta = cluster_Eta[icluster] - jet_Eta[ijet];
+                            const float dR = std::sqrt(deta * deta + jdphi * jdphi);
+                            if (dR <= dphi_cluster_jet_dR_min)
+                                continue;
+
+                            const float calibrated_jet_pT = 1.f / 0.65f * jet_Pt[ijet];
+                            if (!(std::abs(jet_Eta[ijet]) < jet_eta))
+                                continue;
+                            if (!(calibrated_jet_pT > b2bjet_pT_min))
+                                continue;
+
+                            h_dphi_clusterJets_tight[centbin][pTbin_dphi]->Fill(std::abs(jdphi), weight);
+                        }
+                    }
                 }
                 if (
                     cluster_weta_cogx[icluster] > non_tight_weta_cogx_min &&
