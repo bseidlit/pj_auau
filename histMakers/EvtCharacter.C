@@ -5,6 +5,7 @@
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TProfile.h>
 #include <TChain.h>
 #include <TSystem.h>
 #include <cmath>
@@ -55,6 +56,32 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
   }
   std::cout << "infilename: " << infilename << std::endl;
 
+  /////////////////////////////////////
+  // Cross section weights (same as RecoEffCalculator_TTreeReader.C)
+  /////////////////////////////////////
+  const float photon10cross = 6944.675f;
+  const float photon20cross = 130.4461f;
+  const float jet10cross = 3.997e6f;
+  const float jet20cross = 6.2623e4f;
+
+  float xs_weight = 1.0f;
+  if (filetype_base == "photon10") {
+    xs_weight = photon10cross / photon20cross / 0.045f;
+  } else if (filetype_base == "photon12") {
+    xs_weight = 1.0f;
+  } else if (filetype_base == "photon20") {
+    xs_weight = 1.0f;
+  } else if (filetype_base == "photon15") {
+    xs_weight = 1.0f;
+  } else if (filetype_base == "jet10") {
+    xs_weight = jet10cross / jet20cross;
+  } else if (filetype_base == "jet20") {
+    xs_weight = 1.0f;
+  }
+  const float cross_weight = xs_weight;
+  if (issim)
+    std::cout << "[EvtCharacter] cross_weight (not applied to histograms): " << cross_weight << std::endl;
+
   float vertexcut = configYaml["analysis"]["vertex_cut"].as<float>();
   std::vector<float> eta_bins = configYaml["analysis"]["eta_bins"].as<std::vector<float>>();
   float jet_eta_max = configYaml["analysis"]["jet_eta"].as<float>(0.6f);
@@ -97,7 +124,7 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
         std::cerr << "[VertexReweight] ERROR: cannot open " << vertex_reweight_file << std::endl;
         return;
       }
-      TH1 *htmp = dynamic_cast<TH1 *>(fvtx->Get("h_vertexz_ratio_data_over_mccombined"));
+      TH1 *htmp = dynamic_cast<TH1 *>(fvtx->Get("data_over_MC_ratios/h_zvtx_ratio_data_over_photonJet"));
       if (!htmp) {
         std::cerr << "[VertexReweight] ERROR: histogram not found in " << vertex_reweight_file << std::endl;
         fvtx->Close();
@@ -108,6 +135,50 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
       h_vertex_reweight->SetDirectory(nullptr);
       h_vertex_reweight->Sumw2();
       std::cout << "[VertexReweight] Using " << vertex_reweight_file << std::endl;
+    }
+  }
+
+  /////////////////////////////////////
+  // Centrality reweighting (same loading as RecoEffCalculator_TTreeReader.C)
+  /////////////////////////////////////
+  TH1 *h_cent_reweight = nullptr;
+  int cent_reweight_on = 0;
+  std::string cent_reweight_file = "../reweightingDer/output/centrality_reweighting.root";
+  if (issim) {
+    cent_reweight_on = configYaml["analysis"]["centrality_reweight_on"].as<int>(0);
+    cent_reweight_file =
+        configYaml["analysis"]["centrality_reweight_file"].as<std::string>(cent_reweight_file);
+    if (configYaml["analysis"]["cent_reweight_on"])
+      cent_reweight_on = configYaml["analysis"]["cent_reweight_on"].as<int>(cent_reweight_on);
+    if (cent_reweight_on) {
+      TFile *fcent = TFile::Open(cent_reweight_file.c_str(), "READ");
+      if (!fcent || fcent->IsZombie()) {
+        std::cerr << "[CentralityReweight] ERROR: cannot open centrality reweight file: " << cent_reweight_file
+                  << std::endl;
+        return;
+      }
+      TH1 *htmp = dynamic_cast<TH1 *>(fcent->Get("nom_cent_rw_hist"));
+      if (!htmp) {
+        std::cerr << "[CentralityReweight] ERROR: cannot find histogram 'nom_cent_rw_hist' in " << cent_reweight_file
+                  << std::endl;
+        fcent->Close();
+        delete fcent;
+        return;
+      }
+      h_cent_reweight = dynamic_cast<TH1 *>(htmp->Clone("nom_cent_rw_hist_clone"));
+      if (!h_cent_reweight) {
+        std::cerr << "[CentralityReweight] ERROR: failed to clone histogram 'nom_cent_rw_hist' from "
+                  << cent_reweight_file << std::endl;
+        fcent->Close();
+        delete fcent;
+        return;
+      }
+      h_cent_reweight->SetDirectory(nullptr);
+      h_cent_reweight->Sumw2();
+      fcent->Close();
+      delete fcent;
+      std::cout << "[CentralityReweight] Loaded nom_cent_rw_hist from " << cent_reweight_file
+                << " (per-event cent_weight not applied to histograms)" << std::endl;
     }
   }
 
@@ -143,6 +214,8 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
   std::unique_ptr<TTreeReaderValue<float>> cent_reader;
   if (!is_pp)
     cent_reader = std::make_unique<TTreeReaderValue<float>>(reader, "cent");
+
+  TTreeReaderValue<float> totalEMCal_energy(reader, "totalEMCal_energy");
 
   TTreeReaderArray<float> cluster_Et(reader, Form("cluster_Et_%s", clusternodename.c_str()));
   TTreeReaderArray<float> cluster_Eta(reader, Form("cluster_Eta_%s", clusternodename.c_str()));
@@ -183,7 +256,12 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
 
   // Event-level histograms
   TH1D *h_centrality = new TH1D("h_centrality", "Centrality distribution;Centrality [%];Events", n_cent_bins, cent_edges.data());
+  TH1D *h_cent_fine = new TH1D("h_cent_fine", " ", 50,0.001,100.001);
   TH1D *h_vertexz = new TH1D("h_vertexz", "Vertex Z;Vertex Z [cm];Events", 200, -100, 100);
+  TH1D *h_vertexz_no_vertexcut_unweighted = new TH1D(
+      "h_vertexz_no_vertexcut_unweighted",
+      "Vertex Z (before |z| vertex cut, unweighted);Vertex Z [cm];Events",
+      200, -100, 100);
   TH1D *h_Psi2 = new TH1D("h_Psi2", "Event plane #Psi_{2};#Psi_{2} [rad];Events", 100, -M_PI, M_PI);
   TH1D *h_centrality_with_cluster10 = new TH1D("h_centrality_with_cluster10", "Centrality (events with at least one cluster E_{T} > 10 GeV);Centrality [%];Events", n_cent_bins, cent_edges.data());
   TH1D *h_cluster_pt_above10 = new TH1D("h_cluster_pt_above10", "Cluster E_{T} (E_{T} > 10 GeV);Cluster E_{T} [GeV];Clusters", 80, 10, 50);
@@ -197,6 +275,17 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
       "h_Psi2_vs_jetPt",
       "#Psi_{2} vs jet p_{T} (jets with p_{T} > 10 GeV, |#eta| < jet cut);Jet p_{T} [GeV];#Psi_{2} [rad]",
       50, 0, 100, 100, -M_PI, M_PI);
+
+  TH1D *h_totalEMCal_energy =  new TH1D("h_totalEMCal_energy", "Total EMCal energy;E_{tot}^{EMCal} [GeV];events", 200, 0., 2e3);
+  TH1D *h_totalEMCal_energy_weight =  new TH1D("h_totalEMCal_energy_weight  ", "Total EMCal energy;E_{tot}^{EMCal} [GeV];events", 200, 0., 2e3);
+  TH2D *h_totalEMCal_energy_vs_cent = new TH2D(
+      "h_totalEMCal_energy_vs_cent",
+      "Total EMCal energy vs centrality (unweighted);Centrality [%];E_{tot}^{EMCal} [GeV]",
+      100, 0., 100., 200, 0., 2e3);
+
+  TH1D *h_mc_full_weight = new TH1D(
+        "h_mc_full_weight",
+        "Per-event MC weight (#sigma #times vertex #times centrality);w_{MC};events", 1e3, 0., 1e4);
 
   // Iso ET vs centrality (1% bins), one TH2 per pT bin
   std::vector<TH2D *> h_iso_vs_cent_pt;
@@ -214,7 +303,7 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
         Form("h_cluster_yield_vs_cent_pt%d", ipt),
         Form("Cluster yield vs centrality (%.0f < E_{T} < %.0f GeV);Centrality [%%];Clusters",
              pT_bins[ipt], pT_bins[ipt + 1]),
-        20, 0., 100.));
+        50, 0.001, 100.001));
     h_cluster_yield_vs_cent_pt.back()->Sumw2();
   }
 
@@ -240,6 +329,10 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
   h_scaler_per_run->Sumw2();
   TH1D *h_clusters_per_run = new TH1D("h_clusters_per_run", ";Runs;N clusters", 14000, 66000, 80000);
   h_clusters_per_run->Sumw2();
+  TProfile *h_avg_totalEMCal_energy_per_run = new TProfile(
+      "h_avg_totalEMCal_energy_per_run",
+      ";Run;#LT E_{tot}^{EMCal} #GT [GeV]",
+      14000, 66000, 80000);
 
   // Per-run accumulation (runs mixed in tree)
   std::map<int, long long> run_max_scaler;
@@ -274,15 +367,26 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
         continue;
     }
 
-    float weight = 1.0;
+    float vertex_weight = 1.0f;
+    float cent_weight = 1.0f;
     if (issim && vertex_reweight_on && h_vertex_reweight) {
       int bin = h_vertex_reweight->FindBin(*vertexz);
       if (bin < 1) bin = 1;
       if (bin > h_vertex_reweight->GetNbinsX()) bin = h_vertex_reweight->GetNbinsX();
-      weight = h_vertex_reweight->GetBinContent(bin);
-      if (!std::isfinite(weight) || weight <= 0.0)
-        weight = 1.0;
+      vertex_weight = h_vertex_reweight->GetBinContent(bin);
+      if (!std::isfinite(vertex_weight) || vertex_weight <= 0.0) {
+        std::cout << "Warning: vertex weight is nan or inf" << std::endl;
+        std::cout << "vertexz: " << *vertexz << std::endl;
+        vertex_weight = 1.0f;
+      }
     }
+
+    // Histogram weighting: vertex reweight only (cross section and centrality weights computed but not applied).
+    float weight = 1.0f;
+    if (issim && vertex_reweight_on && h_vertex_reweight)
+      weight = vertex_weight;
+
+    h_vertexz_no_vertexcut_unweighted->Fill(*vertexz);
 
     if (std::abs(*vertexz) > vertexcut)
       continue;
@@ -304,8 +408,35 @@ void EvtCharacter(const std::string &configname = "nom.yaml", const std::string 
     if (centbin < 0)
       continue;
 
+    if (issim && !is_pp && cent_reweight_on) {
+      if (!h_cent_reweight) {
+        std::cerr << "[CentralityReweight] ERROR: centrality reweighting is enabled but histogram is not loaded."
+                  << std::endl;
+        return;
+      }
+      int bin = h_cent_reweight->FindBin(cent_percent);
+      if (bin < 1) bin = 1;
+      if (bin > h_cent_reweight->GetNbinsX()) bin = h_cent_reweight->GetNbinsX();
+      cent_weight = h_cent_reweight->GetBinContent(bin);
+      if (!std::isfinite(cent_weight) || cent_weight <= 0.0) {
+        std::cout << "Warning: centrality weight is nan/inf/non-positive, reset to 1.0" << std::endl;
+        std::cout << "cent_percent: " << cent_percent << std::endl;
+        cent_weight = 1.0f;
+      }
+    }
+
+    //cout << "cross_weight: " << cross_weight << " vertex_weight: " << vertex_weight << " cent_weight: " << cent_weight << endl;
+    const float mc_weight_full = cross_weight * vertex_weight * cent_weight;
+
+    h_totalEMCal_energy->Fill(*totalEMCal_energy);
+    h_totalEMCal_energy_weight->Fill(*totalEMCal_energy, mc_weight_full);
+    h_totalEMCal_energy_vs_cent->Fill(cent_percent, *totalEMCal_energy);
+    h_avg_totalEMCal_energy_per_run->Fill(run, *totalEMCal_energy);
+    h_mc_full_weight->Fill(mc_weight_full, 1.0);
+
     h_vertexz->Fill(*vertexz, weight);
     h_centrality->Fill(cent_percent, weight);
+    h_cent_fine->Fill(cent_percent, weight);
     if (std::isfinite(*Psi2) && *Psi2 > -9000.f)
       h_Psi2->Fill(*Psi2, weight);
 

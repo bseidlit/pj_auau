@@ -112,6 +112,7 @@ private:
   int nevent{0};
 
   float m_cent{-9999};
+  int m_minimumbias{-1};
   float vertexz{-9999};
   int mbdnorthhit{0};
   int mbdsouthhit{0};

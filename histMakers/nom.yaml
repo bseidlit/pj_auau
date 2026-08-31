@@ -39,9 +39,10 @@ analysis:
   eff_dR: 0.1
   trigger_used: [12,30,22]
   pT_bins: [15, 20, 30]
-  pT_bins_truth:  [12,15,20,25,30,35]
+  pT_bins_truth:  [13,15,20,30,35]
   centrality_bins: [0, 20, 50, 80]
-  xjgamma_bins: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0 , 2.5]
+  xjgamma_bins: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3 ]
+  xjgamma_bins_truth: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3 ]
   jet_cone_size: 3
   b2bjet_pT_min: 8.0
   b2bjet_dphi: 2.749
@@ -51,8 +52,8 @@ analysis:
   npb_weta_min: 0.4
   # For ShowerShapeCheck: NPB bad-time uses cluster-MBD time (ns)
   npb_delta_t_cut: -7.0 
-  vertex_reweight_on: 0
-  vertex_reweight_file: "results/vertex_reweight.root"
+  vertex_reweight_on: 1
+  vertex_reweight_file: "../reweightingDer/output/vtxz_reweighting.root"
   centrality_reweight_on: 1
   centrality_reweight_file: "../reweightingDer/output/centrality_reweighting.root"
 

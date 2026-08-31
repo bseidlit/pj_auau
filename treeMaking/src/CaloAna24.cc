@@ -38,6 +38,7 @@
 #include <calobase/RawTowerGeomContainer.h>
 
 #include <calotrigger/TriggerRunInfo.h>
+#include <calotrigger/MinimumBiasInfo.h>
 
 // Tower stuff
 #include <calobase/TowerInfo.h>
@@ -146,6 +147,7 @@ int CaloAna24::Init(PHCompositeNode *topNode)
   slimtree->Branch("mbdsouthtmean", &mbdsouthtmean, "mbdsouthtmean/F");
   slimtree->Branch("vertexz", &vertexz, "vertexz/F");
   slimtree->Branch("cent", &m_cent, "cent/F");
+  slimtree->Branch("is_min_bias", &m_minimumbias, "is_min_bias/I");
   slimtree->Branch("Psi2", &_Psi2, "Psi2/F");
   slimtree->Branch("vertexz_truth", &vertexz_truth, "vertexz_truth/F");
   slimtree->Branch("pythiaid", &m_pythiaid, "pythiaid/I");
@@ -349,8 +351,10 @@ int CaloAna24::InitRun(PHCompositeNode *topNode)
 int CaloAna24::process_event(PHCompositeNode *topNode)
 {
   nevent++;
+  std::cout << "------ processing event " << nevent << std::endl;
   topNodeptr = topNode;
   _Psi2 = -9999.0;
+  m_minimumbias = -1;
   // trigger ana for data
   if (!isMC)
   {
@@ -497,7 +501,11 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
   {
     // mbd trigger
 
-    MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
+    MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer_data");
+    if (!mbdtow){
+      std::cout << "trying other MbdPmtContainer after trying MbdPmtContainer_data" << std::endl;
+      mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
+    }
 
     MbdOut * mbdout = static_cast<MbdOut*>(findNode::getClass<MbdOut>(topNode,"MbdOut"));
 
@@ -636,6 +644,12 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
     
   }
 
+  MinimumBiasInfo *minimum_bias_info = findNode::getClass<MinimumBiasInfo>(topNode, "MinimumBiasInfo");
+  if (minimum_bias_info)
+  {
+    m_minimumbias = minimum_bias_info->isAuAuMinimumBias() ? 1 : 0;
+  }
+
   vertexz = m_vertex;
   // set of primary particles
   std::set<PHG4Particle *> primary_particles;
@@ -664,7 +678,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
     if (!truthinfo)
     {
       std::cout << PHWHERE
-                << "PHG4TruthInfoContainer node is missing, can't collect "
+                << "ABORT:: PHG4TruthInfoContainer node is missing, can't collect "
                    "some true information"
                 << std::endl;
       return Fun4AllReturnCodes::ABORTEVENT;
@@ -675,7 +689,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
     PHG4VtxPoint *primaryvtx = truthinfo->GetVtx(primaryvtxid);
     if (!primaryvtx)
     {
-      std::cout << "primaryvtx is missing" << std::endl;
+      std::cout << "CALOANA:: ABORT::primaryvtx is missing" << std::endl;
       return Fun4AllReturnCodes::ABORTEVENT;
     }
     vertexz_truth = primaryvtx->get_z();
@@ -923,7 +937,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
           nparticles++;
           if (nparticles > nparticlesmax)
           {
-            std::cout << "nparticles exceed the max range: " << nparticles << std::endl;
+            std::cout << "CALOANA::ABORTnparticles exceed the max range: " << nparticles << std::endl;
             return Fun4AllReturnCodes::ABORTEVENT;
           }
         }
@@ -972,7 +986,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
 
       if (ndaughter > ndaughtermax)
       {
-        std::cout << "ndaughter exceed the max range: " << ndaughter << std::endl;
+        std::cout << "CALOANA::ABORT::ndaughter exceed the max range: " << ndaughter << std::endl;
         return Fun4AllReturnCodes::ABORTEVENT;
       }
     }
@@ -987,26 +1001,26 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
   emcTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, towerNodeName);
   if (!emcTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node " << towerNodeName << std::endl;
+    std::cout << "CALOANA::ABORT:: RawClusterCNNClassifier::process_event Could not locate tower node " << towerNodeName << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
   emcRawTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_CEMC");
   if (!emcRawTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_CEMC" << std::endl;
+    std::cout << "CALOANA::ABROT::RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_CEMC" << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
   std::string ihcalTowerNodeName = "TOWERINFO_CALIB_HCALIN";
   ihcalTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, ihcalTowerNodeName);
   if (!ihcalTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node " << ihcalTowerNodeName << std::endl;
+    std::cout << "CALOANA::ABROT::RawClusterCNNClassifier::process_event Could not locate tower node " << ihcalTowerNodeName << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
   ihcalRawTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_HCALIN");
   if (!ihcalRawTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_HCALIN" << std::endl;
+    std::cout << "CALOANA::ABROT::RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_HCALIN" << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
@@ -1014,14 +1028,14 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
   ohcalTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, ohcalTowerNodeName);
   if (!ohcalTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node " << ohcalTowerNodeName << std::endl;
+    std::cout << "CALOANA::ABORT::RawClusterCNNClassifier::process_event Could not locate tower node " << ohcalTowerNodeName << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
   ohcalRawTowerContainer = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_HCALOUT");
   if (!ohcalRawTowerContainer)
   {
-    std::cout << "RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_HCALOUT" << std::endl;
+    std::cout << "CALOANA::ABORT:: RawClusterCNNClassifier::process_event Could not locate tower node TOWERS_HCALOUT" << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
@@ -1043,7 +1057,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
   if (!geomEM || !geomIH || !geomOH)
   {
     std::cout << PHWHERE
-              << "CaloAna24::process_event - missing tower geometry node"
+              << "CaloAna24::ABORT:: process_event - missing tower geometry node"
               << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
@@ -1079,6 +1093,9 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
     }
   }
 
+  float totalOff = m_totalOHCal_energy + m_totalIHCal_energy + m_totalEMCal_energy;
+  if (m_cent < 0.2 && totalOff < 200.)
+  std::cout << "cent=" << m_cent << " totE=" << m_totalOHCal_energy + m_totalIHCal_energy + m_totalEMCal_energy << std::endl;
 
 
   //std::cout << "size of photonsfrompi0: " << photonsfrompi0.size() << std::endl;
@@ -1090,7 +1107,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
     if (!clusterContainer)
     {
       std::cout << PHWHERE
-                << "CaloAna24::process_event - missing cluster node: "
+                << "CaloAna24:: ABORT ::process_event - missing cluster node: "
                 << clusternamelist[i] << std::endl;
 
       return Fun4AllReturnCodes::ABORTEVENT;
@@ -1803,7 +1820,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
       ncluster[i]++;
       if (ncluster[i] > nclustermax)
       {
-        std::cout << "ncluster exceed the max range: " << ncluster[i] << std::endl;
+        std::cout << "CaloAna::ABORT:: ncluster exceed the max range: " << ncluster[i] << std::endl;
         return Fun4AllReturnCodes::ABORTEVENT;
       }
 
@@ -1831,7 +1848,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
 
       if (!_jets)
       {
-        std::cout << "Could not locate Jet node " << nodename << std::endl;
+        std::cout << "CaloAna::ABORT:: Could not locate Jet node " << nodename << std::endl;
         return Fun4AllReturnCodes::ABORTEVENT;
       }
 
@@ -1933,7 +1950,7 @@ int CaloAna24::process_event(PHCompositeNode *topNode)
             njet_truth[i]++;
             if (njet_truth[i] > njet_truthmax)
             {
-              std::cout << "njet_truth exceed the max range: " << njet_truth[i] << " for container " << truthjetnamelist[i] << std::endl;
+              std::cout << "CaloANA:: ABORT:: njet_truth exceed the max range: " << njet_truth[i] << " for container " << truthjetnamelist[i] << std::endl;
               return Fun4AllReturnCodes::ABORTEVENT;
             }
           }

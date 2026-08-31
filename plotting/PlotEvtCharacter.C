@@ -5,7 +5,7 @@
 #include <yaml-cpp/yaml.h>
 
 const char *fdata = "../histMakers/results/evt_characterdata_aa.root";
-const char *fphoton = "../histMakers/results/evt_characterphoton20_aa.root";
+const char *fphoton = "../histMakers/results/evt_characterphoton12_aa.root";
 const char *fjet = "../histMakers/results/evt_characterjet20_aa.root";
 const char *plot_outdir = "figs/EvtCharacter";
 
@@ -21,14 +21,10 @@ void PlotEvtCharacter()
   gSystem->Load("/sphenix/u/shuhang98/install/lib64/libyaml-cpp.so");
 
   std::vector<float> pT_bins;
-  std::vector<float> centrality_bins;
   try {
     YAML::Node configYaml = YAML::LoadFile(config_yaml_path);
     if (configYaml["analysis"] && configYaml["analysis"]["pT_bins"]) {
       pT_bins = configYaml["analysis"]["pT_bins"].as<std::vector<float>>();
-    }
-    if (configYaml["analysis"] && configYaml["analysis"]["centrality_bins"]) {
-      centrality_bins = configYaml["analysis"]["centrality_bins"].as<std::vector<float>>();
     }
     std::cout << "Loaded config: " << config_yaml_path << std::endl;
   } catch (const std::exception &e) {
@@ -73,6 +69,7 @@ void PlotEvtCharacter()
 
   TH1 *hd_scaler_per_run = (TH1 *)fd->Get("h_scaler_per_run");
   TH1 *hd_clusters_per_run = (TH1 *)fd->Get("h_clusters_per_run");
+  TH1 *hd_avg_totalEMCal_energy_per_run = (TH1 *)fd->Get("h_avg_totalEMCal_energy_per_run");
 
   TH1 *hd_jet_pt = (TH1 *)fd->Get("h_jet_pt");
   TH1 *hp_jet_pt = (TH1 *)fp->Get("h_jet_pt");
@@ -136,7 +133,12 @@ void PlotEvtCharacter()
     delete h3;
   };
 
-  draw_compare(hd_cent, hp_cent, hj_cent, ";Centrality [%];Events", "centrality");
+  hd_cent->Scale(1.0,"width");
+  hp_cent->Scale(1.0,"width");
+  hj_cent->Scale(1.0,"width");
+
+  
+  draw_compare(hd_cent, hp_cent, hj_cent, ";Centrality [%];Events / Bin Width", "centrality");
   draw_compare(hd_vtx, hp_vtx, hj_vtx, ";Vertex Z [cm];Events", "vertexz");
   draw_compare(hd_cent10, hp_cent10, hj_cent10, ";Centrality [%];Events", "centrality");
   draw_compare(hd_pt, hp_pt, hj_pt, ";Cluster E_{T} [GeV];Clusters", "cluster_pt", true);
@@ -190,77 +192,6 @@ void PlotEvtCharacter()
   draw_th2_colz(h2d_jet_eta_phi_d, legend_label_data, "jet_eta_phi_data");
   draw_th2_colz(h2d_jet_eta_phi_p, legend_label_photon, "jet_eta_phi_photon");
   draw_th2_colz(h2d_jet_eta_phi_j, legend_label_jet, "jet_eta_phi_jet");
-
-  ////////////////////////////////////////
-  // DeltaPhi(cluster, jet) per (pT bin, cent bin)
-  ////////////////////////////////////////
-  if (pT_bins.size() >= 2 && centrality_bins.size() >= 2) {
-    const int nPtBins = (int)pT_bins.size() - 1;
-    const int nCentBins = (int)centrality_bins.size() - 1;
-
-    for (int icent = 0; icent < nCentBins; ++icent) {
-      for (int ipt = 0; ipt < nPtBins; ++ipt) {
-        TString hname = Form("h_dphi_clusterJets_cent%d_pt%d", icent, ipt);
-        TH1 *hd = (TH1 *)fd->Get(hname);
-        TH1 *hp = (TH1 *)fp->Get(hname);
-        TH1 *hj = (TH1 *)fj->Get(hname);
-
-        TH1 *h1 = (TH1 *)hd->Clone();
-        TH1 *h2 = (TH1 *)hp->Clone();
-        TH1 *h3 = (TH1 *)hj->Clone();
-        int dphi_rb = 4;
-        h1->Rebin(dphi_rb);
-        h2->Rebin(dphi_rb);
-        h3->Rebin(dphi_rb);
-
-        TCanvas *c = new TCanvas(Form("c_dphi_%d_%d", icent, ipt), "", 700, 600);
-
-        // Normalize MC shapes to data for a cleaner overlay.
-        double idata = h1->Integral();
-        if (idata > 0 && h2->Integral() > 0) h2->Scale(idata / h2->Integral());
-        if (idata > 0 && h3->Integral() > 0) h3->Scale(idata / h3->Integral());
-
-        float ymax = std::max(h1->GetMaximum(), std::max(h2->GetMaximum(), h3->GetMaximum()));
-        h1->GetYaxis()->SetRangeUser(0, ymax * 1.15);
-        h1->SetXTitle("|#Delta#phi_{clus-jet}|");
-
-        h1->SetMarkerStyle(20);
-        h1->SetMarkerSize(1.0);
-        h1->SetMarkerColor(kBlack);
-        h2->SetLineColor(kBlue);
-        h2->SetLineWidth(2);
-        h3->SetLineColor(kRed);
-        h3->SetLineWidth(2);
-
-        h1->Draw("E");
-        h2->Draw("HIST SAME");
-        h3->Draw("HIST SAME");
-        h1->Draw("E SAME");
-
-        myText(0.65, 0.92, 1, "#bf{#it{sPHENIX}} Internal", 0.04);
-        myMarkerText(0.65, 0.87, kBlack, 20, legend_label_data, 1, 0.04);
-        myMarkerText(0.65, 0.82, kBlue, 33, legend_label_photon, 1, 0.04);
-        myMarkerText(0.65, 0.77, kRed, 34, legend_label_jet, 1, 0.04);
-
-        std::string jet_label = Form("Jet #it{p}_{T}^{calib} > %.0f GeV", 10.0);
-        std::string pt_label = Form("%.0f < #it{E}_{T}^{clus} < %.0f GeV", pT_bins[ipt], pT_bins[ipt + 1]);
-        std::string cent_label = Form("%.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]);
-        myText(0.20, 0.85, 1, pt_label.c_str(), 0.035);
-        myText(0.20, 0.80, 1, jet_label.c_str(), 0.035);
-        myText(0.20, 0.75, 1, cent_label.c_str(), 0.035);
-
-        c->SaveAs(Form("%s/dphi_clusterJet_cent%d_pt%d.pdf", plot_outdir, icent, ipt));
-        delete c;
-        delete h1;
-        delete h2;
-        delete h3;
-      }
-    }
-  } else {
-    std::cerr << "centrality_bins or pT_bins missing/too short in config; skipping dphi plots." << std::endl;
-  }
-
-
 
   ////////////////////////////////////////
   // iso ET vs centrality
@@ -400,8 +331,8 @@ void PlotEvtCharacter()
     delete h1;
   };
   
-  if (!hd_scaler_per_run || !hd_clusters_per_run) {
-    std::cerr << "Missing h_scaler_per_run or h_clusters_per_run in data file." << std::endl;
+  if (!hd_scaler_per_run || !hd_clusters_per_run || !hd_avg_totalEMCal_energy_per_run) {
+    std::cerr << "Missing h_scaler_per_run, h_clusters_per_run, or h_avg_totalEMCal_energy_per_run in data file." << std::endl;
   } else {
   long total_scaler = 0;
   for (int ib = 1; ib <= hd_scaler_per_run->GetNbinsX(); ++ib) {
@@ -451,6 +382,7 @@ void PlotEvtCharacter()
 
   draw_data_only_1d(hd_scaler_per_run, "scaler_per_run_data", false);
   draw_data_only_1d(hd_clusters_per_run, "clusters_per_run_data", false);
+  draw_data_only_1d(hd_avg_totalEMCal_energy_per_run, "avg_totalEMCal_energy_per_run_data", false);
 
 
   TH1F* hd_clusters_per_scaler = (TH1F*)hd_clusters_per_run->Clone("hd_clusters_per_scaler");

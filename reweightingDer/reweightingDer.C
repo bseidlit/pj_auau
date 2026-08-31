@@ -7,10 +7,11 @@
 #include <TF1.h>
 
 const char *fdata = "../histMakers/results/evt_characterdata_aa.root";
-const char *fphoton = "../histMakers/results/evt_characterphoton20_aa.root";
+const char *fphoton = "../histMakers/results/evt_characterphoton12_aa.root";
 const char *fjet = "../histMakers/results/evt_characterjet20_aa.root";
 const char *plot_outdir = "figs/";
 const char *reweight_outfile = "output/centrality_reweighting.root";
+const char *vertex_reweight_outfile = "output/vtxz_reweighting.root";
 
 const char *legend_label_data = "Data";
 const char *legend_label_photon = "Pythia #gamma Overlay";
@@ -52,6 +53,12 @@ void reweightingDer()
   TFile *fout = TFile::Open(reweight_outfile, "RECREATE");
   if (!fout || fout->IsZombie()) {
     std::cerr << "Cannot open output ROOT file: " << reweight_outfile << std::endl;
+    return;
+  }
+  TFile *fvtxout = TFile::Open(vertex_reweight_outfile, "RECREATE");
+  if (!fvtxout || fvtxout->IsZombie()) {
+    std::cerr << "Cannot open vertex output ROOT file: " << vertex_reweight_outfile << std::endl;
+    fout->Close();
     return;
   }
     
@@ -180,10 +187,101 @@ void reweightingDer()
 
   }
 
+  ////////////////////////////////////////
+  // Vertex-z reweighting (nominal = photon sample)
+  // Use h_vertexz_no_vertexcut_unweighted from EvtCharacter: before |z| cut, unweighted counts.
+  ////////////////////////////////////////
+  const char *vtx_hist_name = "h_vertexz_no_vertexcut_unweighted";
+  TH1 *h_vertex_data_in = dynamic_cast<TH1 *>(fd->Get(vtx_hist_name));
+  TH1 *h_vertex_photon_in = dynamic_cast<TH1 *>(fp->Get(vtx_hist_name));
+  TH1 *h_vertex_jet_in = dynamic_cast<TH1 *>(fj->Get(vtx_hist_name));
+
+  if (!h_vertex_data_in || !h_vertex_photon_in) {
+    std::cerr << "Missing " << vtx_hist_name
+              << " in data/photon files (re-run EvtCharacter); skip vertex reweight output." << std::endl;
+  } else {
+    TH1D *h_zvtx_data = dynamic_cast<TH1D *>(h_vertex_data_in->Clone("h_zvtx_data"));
+    TH1D *h_zvtx_photon = dynamic_cast<TH1D *>(h_vertex_photon_in->Clone("h_zvtx_photon"));
+    TH1D *h_zvtx_jet = nullptr;
+    if (h_vertex_jet_in) {
+      h_zvtx_jet = dynamic_cast<TH1D *>(h_vertex_jet_in->Clone("h_zvtx_jet"));
+    }
+    h_zvtx_data->SetDirectory(nullptr);
+    h_zvtx_photon->SetDirectory(nullptr);
+    if (h_zvtx_jet) h_zvtx_jet->SetDirectory(nullptr);
+
+    const double i_zvtx_data = h_zvtx_data->Integral();
+    const double i_zvtx_photon = h_zvtx_photon->Integral();
+    if (i_zvtx_data > 0.0 && i_zvtx_photon > 0.0) {
+      h_zvtx_data->Scale(1.0 / i_zvtx_data);
+      h_zvtx_photon->Scale(1.0 / i_zvtx_photon);
+      if (h_zvtx_jet && h_zvtx_jet->Integral() > 0.0) {
+        h_zvtx_jet->Scale(1.0 / h_zvtx_jet->Integral());
+      }
+
+      TH1D *h_zvtx_ratio_data_over_photonJet = dynamic_cast<TH1D *>(h_zvtx_data->Clone("h_zvtx_ratio_data_over_photonJet"));
+      h_zvtx_ratio_data_over_photonJet->SetDirectory(nullptr);
+      h_zvtx_ratio_data_over_photonJet->Divide(h_zvtx_photon);  // nominal from photon sample
+      h_zvtx_ratio_data_over_photonJet->SetTitle(
+          "Vertex-z reweight (uncut z, unweighted shapes);Vertex z [cm];Data / Photon");
+
+      TH1D *h_zvtx_ratio_data_over_jet = nullptr;
+      if (h_zvtx_jet) {
+        h_zvtx_ratio_data_over_jet = dynamic_cast<TH1D *>(h_zvtx_data->Clone("h_zvtx_ratio_data_over_jet"));
+        h_zvtx_ratio_data_over_jet->SetDirectory(nullptr);
+        h_zvtx_ratio_data_over_jet->Divide(h_zvtx_jet);
+      }
+
+      TCanvas *cvtx = new TCanvas("c_vertex_reweight", "", 750, 620);
+      h_zvtx_ratio_data_over_photonJet->SetMarkerStyle(20);
+      h_zvtx_ratio_data_over_photonJet->SetMarkerColor(kBlue + 1);
+      h_zvtx_ratio_data_over_photonJet->SetLineColor(kBlue + 1);
+      h_zvtx_ratio_data_over_photonJet->Draw("E");
+      if (h_zvtx_ratio_data_over_jet) {
+        h_zvtx_ratio_data_over_jet->SetMarkerStyle(21);
+        h_zvtx_ratio_data_over_jet->SetMarkerColor(kRed + 1);
+        h_zvtx_ratio_data_over_jet->SetLineColor(kRed + 1);
+        h_zvtx_ratio_data_over_jet->Draw("E SAME");
+      }
+      TLine *line1 = new TLine(h_zvtx_ratio_data_over_photonJet->GetXaxis()->GetXmin(), 1.0,
+                               h_zvtx_ratio_data_over_photonJet->GetXaxis()->GetXmax(), 1.0);
+      line1->SetLineColor(kGray + 2);
+      line1->SetLineStyle(7);
+      line1->Draw("SAME");
+      myText(0.62, 0.90, 1, "#bf{#it{sPHENIX}} Internal", 0.04);
+      myMarkerText(0.62, 0.84, kBlue + 1, 20, "Data / #gamma MC (nominal)", 1, 0.035);
+      if (h_zvtx_ratio_data_over_jet) myMarkerText(0.62, 0.79, kRed + 1, 21, "Data / Jet MC", 1, 0.035);
+      cvtx->SaveAs(Form("%s/vertex_reweight_ratio.pdf", plot_outdir));
+
+      fvtxout->cd();
+      TDirectory *dir = fvtxout->mkdir("data_over_MC_ratios");
+      dir->cd();
+      h_zvtx_data->Write();
+      h_zvtx_photon->Write();
+      if (h_zvtx_jet) h_zvtx_jet->Write();
+      h_zvtx_ratio_data_over_photonJet->Write();
+      if (h_zvtx_ratio_data_over_jet) h_zvtx_ratio_data_over_jet->Write();
+
+      delete line1;
+      delete cvtx;
+      delete h_zvtx_ratio_data_over_photonJet;
+      if (h_zvtx_ratio_data_over_jet) delete h_zvtx_ratio_data_over_jet;
+    } else {
+      std::cerr << "Non-positive integrals for " << vtx_hist_name << " in data/photon; skip vertex reweight ratio."
+                << std::endl;
+    }
+
+    delete h_zvtx_data;
+    delete h_zvtx_photon;
+    if (h_zvtx_jet) delete h_zvtx_jet;
+  }
+
   fout->Close();
+  fvtxout->Close();
   fd->Close();
   fp->Close();
   fj->Close();
   std::cout << "Wrote reweight functions to " << reweight_outfile << std::endl;
+  std::cout << "Wrote vertex reweight histograms to " << vertex_reweight_outfile << std::endl;
 
 }

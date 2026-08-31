@@ -136,6 +136,12 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         max_photon_upper = 20;
         weight = photon10cross / photon20cross /0.045;
     }
+    else if (filetype_base == "photon12")
+    {
+        max_photon_lower = 12;
+        max_photon_upper = 30;
+        weight = 1.0;
+    }
     else if (filetype_base == "photon20")
     {
         max_photon_lower = 20;
@@ -183,40 +189,26 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
             TFile* fvtx = TFile::Open(vertex_reweight_file.c_str(), "READ");
             if (!fvtx || fvtx->IsZombie())
             {
-                std::cerr << "[VertexReweight] ERROR: cannot open vertex reweight file: "
-                          << vertex_reweight_file << std::endl;
+                std::cerr << "[VertexReweight] ERROR: cannot open vertex reweight file: " << vertex_reweight_file << std::endl;
                 return;
             }
 
-            TH1* htmp = dynamic_cast<TH1*>(fvtx->Get("h_vertexz_ratio_data_over_mccombined"));
+            TH1* htmp = dynamic_cast<TH1*>(fvtx->Get("data_over_MC_ratios/h_zvtx_ratio_data_over_photonJet"));
             if (!htmp)
             {
-                std::cerr << "[VertexReweight] ERROR: cannot find histogram 'h_vertexz_ratio_data_over_mccombined' in "
-                          << vertex_reweight_file << std::endl;
-                fvtx->Close();
-                delete fvtx;
+                std::cerr << "[VertexReweight] ERROR: cannot find histogram " << std::endl;
                 return;
             }
 
             std::string vtx_histname = htmp->GetName();  // save before Close() invalidates htmp
-	    std::cout<<vtx_histname<<std::endl;
-	    h_vertex_reweight = dynamic_cast<TH1*>(htmp->Clone("h_vertexz_ratio_data_over_mccombined_clone"));
-            //fvtx->Close();
-            //delete fvtx;
-
-            if (!h_vertex_reweight)
-            {
-                std::cerr << "[VertexReweight] ERROR: failed to clone histogram from "
-                          << vertex_reweight_file << std::endl;
-                return;
-            }
+	        h_vertex_reweight = dynamic_cast<TH1*>(htmp->Clone("h_zvtx_ratio_data_over_photonJet_clone"));
 
             h_vertex_reweight->SetDirectory(nullptr);
             h_vertex_reweight->Sumw2();
-            std::cout << "[VertexReweight] Using histogram weights from "
-                      << vertex_reweight_file << " : " << vtx_histname << std::endl;
+            std::cout << "[VertexReweight] Using histogram weights from " << vertex_reweight_file << " : " << vtx_histname << std::endl;
         }
     }
+
 
     /////////////////////////////////////
     // Centrality reweighting
@@ -416,6 +408,19 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
     {
         xj_bin_edges[i] = xjgamma_bins[i];
     }
+
+    // truth xjgamma binning (variable bins from YAML; default to reco xjgamma bins)
+    std::vector<float> xjgamma_bins_truth = configYaml["analysis"]["xjgamma_bins_truth"].as<std::vector<float>>();
+    if (xjgamma_bins_truth.empty())
+        xjgamma_bins_truth = xjgamma_bins;
+    int n_xj_bins_truth = xjgamma_bins_truth.size() - 1;
+    double xj_bin_edges_truth[n_xj_bins_truth + 1];
+    for (int i = 0; i < n_xj_bins_truth + 1; ++i)
+    {
+        xj_bin_edges_truth[i] = xjgamma_bins_truth[i];
+    }
+    const int n_global_xjgamma_truth_bins = n_pT_bins_truth * n_xj_bins_truth;
+    const int n_global_xjgamma_reco_bins = n_pT_bins * n_xj_bins;
 
     int conesize = configYaml["analysis"]["cone_size"].as<int>();
 
@@ -618,6 +623,9 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
       cent_reader = std::make_unique<TTreeReaderValue<float>>(reader, "cent");
     else if (!is_pp && !chain.FindBranch("cent"))
       std::cout << "RecoEffCalculator_TTreeReader: WARNING data_aa but no 'cent' branch in tree; all events will be skipped (centbin invalid)" << std::endl;
+    TTreeReaderValue<float> totalEMCal_energy(reader, "totalEMCal_energy");
+    TTreeReaderValue<float> totalIHCal_energy(reader, "totalIHCal_energy");
+    TTreeReaderValue<float> totalOHCal_energy(reader, "totalOHCal_energy");
     TTreeReaderArray<float> trigger_prescale(reader, "trigger_prescale");
 
     // Particle arrays
@@ -800,6 +808,23 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
     TH1F *h_max_decay_pT = new TH1F("h_max_decay_pT", "Max Decay Photon pT", 1000, 0, 100);
     TH1F *h_decay_photon_pT = new TH1F("h_decay_photon_pT", "Decay Photon pT", 1000, 0, 100);
     TH1F *h_vertexz = new TH1F("h_vertexz", "Vertex z", 200, -100, 100);
+    TH1D *h_totalEMCal_energy_tight_weight = new TH1D(
+        "h_totalEMCal_energy_tight_weight",
+        "Total EMCal energy (events with at least one tight cluster);E_{tot}^{EMCal} [GeV];events",
+        200, 0., 2e3);
+    TH1D *h_totalIHCal_energy_tight_weight = new TH1D(
+        "h_totalIHCal_energy_tight_weight",
+        "Total IHCal energy (events with at least one tight cluster);E_{tot}^{IHCal} [GeV];events",
+        200, 0., 2e3);
+    TH1D *h_totalOHCal_energy_tight_weight = new TH1D(
+        "h_totalOHCal_energy_tight_weight",
+        "Total OHCal energy (events with at least one tight cluster);E_{tot}^{OHCal} [GeV];events",
+        200, 0., 2e3);
+    std::vector<double> cent_hist_edges(centrality_bins.begin(), centrality_bins.end());
+    TH1D *h_centrality_tight_weight = new TH1D(
+        "h_centrality_tight_weight",
+        ";Centrality [%];events",
+        100,0,100);
     TH1F *h_cluster_common_Et = new TH1F("h_cluster_common_E", "Cluster Common E", 1000, 0, 100);
     TH1F *h_cluster_common_leading_Et = new TH1F("h_cluster_common_leading_E", "Cluster Common Leading E", 1000, 0, 100);
 
@@ -866,6 +891,13 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
     // vector for the response matrix th2
     std::vector<TH2D *> h_response_full_list;
     std::vector<TH2D *> h_response_half_list;
+    // Flattened 2D response matrix for unfolding in (pT^gamma, xjgamma):
+    // x-axis = truth global bin, y-axis = reco global bin
+    std::vector<TH2D *> h_response_xjgamma_global_list;
+    // Native 2D RooUnfold response in (xjgamma, pT^gamma)
+    std::vector<TH2D *> h_xjgamma_truth_response;
+    std::vector<TH2D *> h_xjgamma_reco_response;
+    std::vector<RooUnfoldResponse *> responses_xjgamma_2d;
     // id histogram for unfolding
     std::vector<TH1D *> h_pT_truth_response;
     std::vector<TH1D *> h_pT_reco_response;
@@ -1006,6 +1038,25 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         TH2D *h_response_half = new TH2D(Form("h_response_half_%d", icent), Form("Response Matrix %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_pT_bins, pT_bin_edges, n_pT_bins_truth, pT_bin_edges_truth);
         responses_half.push_back(new RooUnfoldResponse(h_pT_reco_half_response[icent], h_pT_truth_half_response[icent], h_response_half, Form("response_matrix_half_%d", icent), ""));
         h_response_half_list.push_back(h_response_half);
+        h_response_xjgamma_global_list.push_back(new TH2D(
+            Form("h_response_xjgamma_global_cent%d", icent),
+            Form("Flattened response in (p_{T}^{#gamma},x_{J#gamma}) %.0f-%.0f%% cent;truth global bin (p_{T}^{#gamma},x_{J#gamma});reco global bin (p_{T}^{#gamma},x_{J#gamma})",
+                 centrality_bins[icent], centrality_bins[icent + 1]),
+            n_global_xjgamma_truth_bins, 0.5, n_global_xjgamma_truth_bins + 0.5,
+            n_global_xjgamma_reco_bins, 0.5, n_global_xjgamma_reco_bins + 0.5));
+        h_xjgamma_truth_response.push_back(new TH2D(
+            Form("h_xjgamma_truth_response_cent%d", icent),
+            Form("Truth (x_{J#gamma},p_{T}^{#gamma}) %.0f-%.0f%% cent;x_{J#gamma}^{truth};p_{T,truth}^{#gamma} [GeV]",
+                 centrality_bins[icent], centrality_bins[icent + 1]),
+            n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins_truth, pT_bin_edges_truth));
+        h_xjgamma_reco_response.push_back(new TH2D(
+            Form("h_xjgamma_reco_response_cent%d", icent),
+            Form("Reco (x_{J#gamma},p_{T}^{#gamma}) %.0f-%.0f%% cent;x_{J#gamma}^{reco};p_{T,reco}^{#gamma} [GeV]",
+                 centrality_bins[icent], centrality_bins[icent + 1]),
+            n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
+        responses_xjgamma_2d.push_back(new RooUnfoldResponse(
+            h_xjgamma_reco_response[icent], h_xjgamma_truth_response[icent],
+            Form("response_matrix_xjgamma_2d_cent%d", icent), ""));
         h_ncluster_truth.push_back(new TH2D(Form("h_ncluster_truth_%d", icent), Form("N Cluster From Truth %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), 400, 0, 40, 10, 0, 10));
         h_pT_truth_reco.push_back(new TH2D(Form("h_pT_truth_reco_%d", icent), Form("Truth Reco %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), 400, 5, 40, 150, 0, 1.5));
         h_jet_pT_response.push_back(new TH2D(
@@ -1029,12 +1080,12 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         h_nontight_noniso_truthmatchreco_xjgamma_signal.push_back(new TH2D(Form("h_nontight_noniso_truthmatchreco_xjgamma_signal_cent%d", icent), Form("Non-Tight Non-Iso TruthMatchedRecoJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
         h_all_truthmatchreco_xjgamma_signal.push_back(new TH2D(Form("h_all_truthmatchreco_xjgamma_signal_cent%d", icent), Form("All TruthMatchedRecoJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
         h_tight_truthmatchreco_xjgamma_signal.push_back(new TH2D(Form("h_tight_truthmatchreco_xjgamma_signal_cent%d", icent), Form("Tight TruthMatchedRecoJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_tight_iso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_iso_truthjet_xjgamma_signal_cent%d", icent), Form("Tight Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_tight_noniso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_noniso_truthjet_xjgamma_signal_cent%d", icent), Form("Tight Non-Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_nontight_iso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_nontight_iso_truthjet_xjgamma_signal_cent%d", icent), Form("Non-Tight Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_nontight_noniso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_nontight_noniso_truthjet_xjgamma_signal_cent%d", icent), Form("Non-Tight Non-Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_all_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_all_truthjet_xjgamma_signal_cent%d", icent), Form("All TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
-        h_tight_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_truthjet_xjgamma_signal_cent%d", icent), Form("Tight TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
+        h_tight_iso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_iso_truthjet_xjgamma_signal_cent%d", icent), Form("Tight Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
+        h_tight_noniso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_noniso_truthjet_xjgamma_signal_cent%d", icent), Form("Tight Non-Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
+        h_nontight_iso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_nontight_iso_truthjet_xjgamma_signal_cent%d", icent), Form("Non-Tight Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
+        h_nontight_noniso_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_nontight_noniso_truthjet_xjgamma_signal_cent%d", icent), Form("Non-Tight Non-Iso TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
+        h_all_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_all_truthjet_xjgamma_signal_cent%d", icent), Form("All TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
+        h_tight_truthjet_xjgamma_signal.push_back(new TH2D(Form("h_tight_truthjet_xjgamma_signal_cent%d", icent), Form("Tight TruthJet XJGamma Signal %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins_truth, xj_bin_edges_truth, n_pT_bins, pT_bin_edges));
         h_tight_iso_xjgamma_background.push_back(new TH2D(Form("h_tight_iso_xjgamma_background_cent%d", icent), Form("Tight Iso XJGamma Background %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
         h_tight_noniso_xjgamma_background.push_back(new TH2D(Form("h_tight_noniso_xjgamma_background_cent%d", icent), Form("Tight Non-Iso XJGamma Background %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
         h_nontight_iso_xjgamma_background.push_back(new TH2D(Form("h_nontight_iso_xjgamma_background_cent%d", icent), Form("Non-Tight Iso XJGamma Background %.0f-%.0f%% cent", centrality_bins[icent], centrality_bins[icent + 1]), n_xj_bins, xj_bin_edges, n_pT_bins, pT_bin_edges));
@@ -1088,12 +1139,6 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         {
             if (vertex_reweight_on)
             {
-                if (!h_vertex_reweight)
-                {
-                    std::cerr << "[VertexReweight] ERROR: vertex reweighting is enabled but histogram is not loaded."
-                              << std::endl;
-                    return;
-                }
                 int bin = h_vertex_reweight->FindBin(*vertexz);
                 if (bin < 1) bin = 1;
                 if (bin > h_vertex_reweight->GetNbinsX()) bin = h_vertex_reweight->GetNbinsX();
@@ -1691,36 +1736,9 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                     }
                 }
             }
-            if (issim)
-            {
-                //cout << "--------------------------------" << std::endl;
-                for (int ijet = 0; ijet < *njet_truth; ijet++)
-                {
-                    float dphi = cluster_Phi[icluster] - jet_truth_Phi[ijet];
-                    while (dphi > M_PI)
-                        dphi = dphi - 2 * M_PI;
-                    while (dphi < -M_PI)
-                        dphi = dphi + 2 * M_PI;
-
-                    //cout << "jtr_Phi: " << jet_truth_Phi[ijet] << " eta: " << jet_truth_Eta[ijet] << " pT: " << jet_truth_Pt[ijet] << " dphi: " << dphi << std::endl;
-                    if (abs(jet_truth_Eta[ijet]) < jet_eta)
-                    {
-                        if (abs(dphi) > b2bjet_dphi)
-                        {
-                            if (jet_truth_Pt[ijet] > 5)
-                            {
-                                b2btruthjet_pT.push_back(jet_truth_Pt[ijet]);
-                            }
-                        }
-                    }
-                }
-            }
-
             std::sort(b2bjet_pT.begin(), b2bjet_pT.end());
             std::sort(b2bjet_truthmatched_pT.begin(), b2bjet_truthmatched_pT.end());
-            std::sort(b2btruthjet_pT.begin(), b2btruthjet_pT.end());
             const float max_b2bjet_pT = b2bjet_pT.empty() ? -1.f : b2bjet_pT.back();
-            const float max_b2btruthjet_pT = b2btruthjet_pT.empty() ? -1.f : b2btruthjet_pT.back();
 
             bool passes_common_b2bjet = (!common_b2bjet_cut) || (max_b2bjet_pT >= common_b2bjet_pt_min);
             // One xj entry per back-to-back jet above threshold; only for leading cluster in the event
@@ -1849,6 +1867,11 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                         }
                     }
 
+                    h_totalEMCal_energy_tight_weight->Fill(*totalEMCal_energy, weight);
+                    h_totalIHCal_energy_tight_weight->Fill(*totalIHCal_energy, weight);
+                    h_totalOHCal_energy_tight_weight->Fill(*totalOHCal_energy, weight);
+                    h_centrality_tight_weight->Fill(cent_percent, weight);
+
                     const float dphi_cluster_jet_dR_min = 0.2f;
                     if (pTbin_dphi >= 0)
                     {
@@ -1959,13 +1982,14 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                     for (float jpt : b2bjet_pT)
                         h->Fill(jpt / leading_cluster_ET, cluster_Et[icluster], weight);
             };
-            auto fill_truth_xjgamma = [&](TH2D *h) {
+            auto fill_truth_xjgamma = [&](TH2D *h, float truth_photon_pT) {
                 if (!fill_xjgamma || !issim || !h) return;
+                if (truth_photon_pT <= 0.f) return;
                 if (b2btruthjet_pT.empty())
-                    h->Fill(xj_underflow_x(h), cluster_Et[icluster], weight);
+                    h->Fill(xj_underflow_x(h), truth_photon_pT, weight);
                 else
                     for (float tpt : b2btruthjet_pT)
-                        h->Fill(tpt / leading_cluster_ET, cluster_Et[icluster], weight);
+                        h->Fill(tpt / truth_photon_pT, truth_photon_pT, weight);
             };
             auto fill_truthmatched_reco_xjgamma = [&](TH2D *h) {
                 if (!fill_xjgamma || !issim || !h) return;
@@ -1974,6 +1998,19 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                 else
                     for (float jpt : b2bjet_truthmatched_pT)
                         h->Fill(jpt / leading_cluster_ET, cluster_Et[icluster], weight);
+            };
+            auto find_bin = [](float value, const std::vector<float> &edges) {
+                for (int ib = 0; ib + 1 < static_cast<int>(edges.size()); ++ib)
+                {
+                    if (value >= edges[ib] && value < edges[ib + 1])
+                        return ib;
+                }
+                return -1;
+            };
+            auto in_range = [](float value, const std::vector<float> &edges) {
+                if (edges.size() < 2)
+                    return false;
+                return (value >= edges.front() && value < edges.back());
             };
 
             if (tight && iso)
@@ -2035,6 +2072,29 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                     continue;
                 }
                 int iparticle = particle_trkidmap[cluster_truthtrkID[icluster]];
+
+                b2btruthjet_pT.clear();
+                if (photon_reco.find(iparticle) != photon_reco.end())
+                {
+                    for (int ijet = 0; ijet < *njet_truth; ++ijet)
+                    {
+                        float truth_dphi = particle_Phi[iparticle] - jet_truth_Phi[ijet];
+                        while (truth_dphi > M_PI)
+                            truth_dphi -= 2 * M_PI;
+                        while (truth_dphi < -M_PI)
+                            truth_dphi += 2 * M_PI;
+
+                        if (!(std::abs(jet_truth_Eta[ijet]) < jet_eta))
+                            continue;
+                        if (!(std::abs(truth_dphi) > b2bjet_dphi))
+                            continue;
+                        if (!(jet_truth_Pt[ijet] > b2bjet_pT_min))
+                            continue;
+
+                        b2btruthjet_pT.push_back(jet_truth_Pt[ijet]);
+                    }
+                    std::sort(b2btruthjet_pT.begin(), b2btruthjet_pT.end());
+                }
 
                 // delta R cut
                 float deta = cluster_Eta[icluster] - particle_Eta[iparticle];
@@ -2123,13 +2183,13 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                             h_tight_cluster_signal[centbin]->Fill(cluster_Et[icluster], weight);
                             fill_reco_xjgamma(h_tight_xjgamma_signal[centbin]);
                             fill_truthmatched_reco_xjgamma(h_tight_truthmatchreco_xjgamma_signal[centbin]);
-                            fill_truth_xjgamma(h_tight_truthjet_xjgamma_signal[centbin]);
+                            fill_truth_xjgamma(h_tight_truthjet_xjgamma_signal[centbin], particle_Pt[iparticle]);
                             if (iso)
                             {
                                 h_tight_iso_cluster_signal[centbin]->Fill(cluster_Et[icluster], weight);
                                 fill_reco_xjgamma(h_tight_iso_xjgamma_signal[centbin]);
                                 fill_truthmatched_reco_xjgamma(h_tight_iso_truthmatchreco_xjgamma_signal[centbin]);
-                                fill_truth_xjgamma(h_tight_iso_truthjet_xjgamma_signal[centbin]);
+                                fill_truth_xjgamma(h_tight_iso_truthjet_xjgamma_signal[centbin], particle_Pt[iparticle]);
                                 // fill the response matrix
 
                                 float response_reweight = 1.0;
@@ -2141,6 +2201,64 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                                 h_pT_reco_response[centbin]->Fill(cluster_Et[icluster], weight*response_reweight);
                                 responses_full[centbin]->Fill(cluster_Et[icluster], particle_Pt[iparticle], weight * response_reweight);
                                 h_response_full_list[centbin]->Fill(cluster_Et[icluster], particle_Pt[iparticle], weight * response_reweight);
+
+                                // Build matched pairs in xjgamma by sorting both reco and truth xj lists
+                                // in descending order and pairing highest-with-highest.
+                                std::vector<float> reco_xj_values;
+                                std::vector<float> truth_xj_values;
+                                if (leading_cluster_ET > 0.f)
+                                {
+                                    for (float jpt : b2bjet_pT)
+                                        reco_xj_values.push_back(jpt / leading_cluster_ET);
+                                }
+                                if (particle_Pt[iparticle] > 0.f)
+                                {
+                                    for (float tpt : b2btruthjet_pT)
+                                        truth_xj_values.push_back(tpt / particle_Pt[iparticle]);
+                                }
+
+                                std::sort(reco_xj_values.begin(), reco_xj_values.end(), std::greater<float>());
+                                std::sort(truth_xj_values.begin(), truth_xj_values.end(), std::greater<float>());
+
+                                const int reco_pt_bin = find_bin(cluster_Et[icluster], pT_bins);
+                                const int truth_pt_bin = find_bin(particle_Pt[iparticle], pT_bins_truth);
+                                if (reco_pt_bin >= 0 && truth_pt_bin >= 0)
+                                {
+                                    const int npairs = std::min(static_cast<int>(reco_xj_values.size()), static_cast<int>(truth_xj_values.size()));
+                                    for (int im = 0; im < npairs; ++im)
+                                    {
+                                        const float reco_xj = reco_xj_values[im];
+                                        const float truth_xj = truth_xj_values[im];
+                                        const int reco_xj_bin = find_bin(reco_xj_values[im], xjgamma_bins);
+                                        const int truth_xj_bin = find_bin(truth_xj_values[im], xjgamma_bins_truth);
+                                        if (reco_xj_bin < 0 || truth_xj_bin < 0)
+                                            continue;
+
+                                        const int reco_global_bin = reco_pt_bin * n_xj_bins + reco_xj_bin + 1;
+                                        const int truth_global_bin = truth_pt_bin * n_xj_bins_truth + truth_xj_bin + 1;
+                                        h_response_xjgamma_global_list[centbin]->Fill(truth_global_bin, reco_global_bin, weight * response_reweight);
+                                        responses_xjgamma_2d[centbin]->Fill(
+                                            reco_xj, cluster_Et[icluster],
+                                            truth_xj, particle_Pt[iparticle],
+                                            weight * response_reweight);
+                                    }
+
+                                    // Fill explicit fake/miss entries for unpaired xj values.
+                                    for (int im = npairs; im < static_cast<int>(reco_xj_values.size()); ++im)
+                                    {
+                                        const float reco_xj = reco_xj_values[im];
+                                        if (!in_range(reco_xj, xjgamma_bins))
+                                            continue;
+                                        responses_xjgamma_2d[centbin]->Fake(reco_xj, cluster_Et[icluster], weight * response_reweight);
+                                    }
+                                    for (int im = npairs; im < static_cast<int>(truth_xj_values.size()); ++im)
+                                    {
+                                        const float truth_xj = truth_xj_values[im];
+                                        if (!in_range(truth_xj, xjgamma_bins_truth))
+                                            continue;
+                                        responses_xjgamma_2d[centbin]->Miss(truth_xj, particle_Pt[iparticle], weight * response_reweight);
+                                    }
+                                }
                                 if (ientry < (nentries / 2))
                                 {
                                     h_pT_truth_half_response[centbin]->Fill(particle_Pt[iparticle], weight);
@@ -2161,21 +2279,21 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
                         h_tight_noniso_cluster_signal[centbin]->Fill(cluster_Et[icluster], weight);
                         fill_reco_xjgamma(h_tight_noniso_xjgamma_signal[centbin]);
                         fill_truthmatched_reco_xjgamma(h_tight_noniso_truthmatchreco_xjgamma_signal[centbin]);
-                        fill_truth_xjgamma(h_tight_noniso_truthjet_xjgamma_signal[centbin]);
+                        fill_truth_xjgamma(h_tight_noniso_truthjet_xjgamma_signal[centbin], particle_Pt[iparticle]);
                     }
                     if (nontight && iso)
                     {
                         h_nontight_iso_cluster_signal[centbin]->Fill(cluster_Et[icluster], weight);
                         fill_reco_xjgamma(h_nontight_iso_xjgamma_signal[centbin]);
                         fill_truthmatched_reco_xjgamma(h_nontight_iso_truthmatchreco_xjgamma_signal[centbin]);
-                        fill_truth_xjgamma(h_nontight_iso_truthjet_xjgamma_signal[centbin]);
+                        fill_truth_xjgamma(h_nontight_iso_truthjet_xjgamma_signal[centbin], particle_Pt[iparticle]);
                     }
                     if (nontight && noniso)
                     {
                         h_nontight_noniso_cluster_signal[centbin]->Fill(cluster_Et[icluster], weight);
                         fill_reco_xjgamma(h_nontight_noniso_xjgamma_signal[centbin]);
                         fill_truthmatched_reco_xjgamma(h_nontight_noniso_truthmatchreco_xjgamma_signal[centbin]);
-                        fill_truth_xjgamma(h_nontight_noniso_truthjet_xjgamma_signal[centbin]);
+                        fill_truth_xjgamma(h_nontight_noniso_truthjet_xjgamma_signal[centbin], particle_Pt[iparticle]);
                     }
 
                     h_singal_reco_isoET[centbin]->Fill(cluster_Et[icluster], recoisoET, weight);
@@ -2235,15 +2353,19 @@ void RecoEffCalculator_TTreeReader(const std::string &configname = "config_bdt_n
         responses_full[icent]->Write();
 
         responses_half[icent]->Write();
+        responses_xjgamma_2d[icent]->Write();
 
         h_pT_truth_response[icent]->Write();
         h_pT_reco_response[icent]->Write();
+        h_xjgamma_truth_response[icent]->Write();
+        h_xjgamma_reco_response[icent]->Write();
 
         h_pT_truth_half_response[icent]->Write();
         h_pT_reco_half_response[icent]->Write();
 
         h_pT_truth_secondhalf_response[icent]->Write();
         h_pT_reco_secondhalf_response[icent]->Write();
+        h_response_xjgamma_global_list[icent]->Write();
     }
 
     fout->Write();

@@ -180,7 +180,7 @@ void ShowerShapeCheck(const std::string &configname = "nom.yaml", const std::str
         return;
       }
 
-      TH1 *htmp = dynamic_cast<TH1 *>(fvtx->Get("h_vertexz_ratio_data_over_mccombined"));
+      TH1 *htmp = dynamic_cast<TH1 *>(fvtx->Get("data_over_MC_ratios/h_zvtx_ratio_data_over_photonJet"));
       if (!htmp) {
         std::cerr << "[VertexReweight] ERROR: cannot find histogram "
                      "'h_vertexz_ratio_data_over_mccombined' in "
@@ -297,6 +297,11 @@ void ShowerShapeCheck(const std::string &configname = "nom.yaml", const std::str
   std::copy(pT_bins.begin(), pT_bins.end(), pT_bin_edges);
 
   int conesize = configYaml["analysis"]["cone_size"].as<int>();
+  const int jet_cone_size = configYaml["analysis"]["jet_cone_size"].as<int>(3);
+  const bool use_jet_r04 = (jet_cone_size == 4);
+  std::cout << "[ShowerShapeCheck] jet_cone_size=" << jet_cone_size
+            << " -> Anti-kT Tower r0" << (use_jet_r04 ? "4" : "3") << "_Sub1"
+            << ", truth jets AntiKt_Truth_r0" << (use_jet_r04 ? "4" : "3") << std::endl;
 
   // BDT bins with default values if not specified in config
   std::vector<float> bdt_bins_default = {0.0, 0.3, 0.7, 1.0};
@@ -607,19 +612,43 @@ void ShowerShapeCheck(const std::string &configname = "nom.yaml", const std::str
     cluster_npb_score = std::make_unique<TTreeReaderArray<float>>(reader, npb_score_branch.c_str());
   }
 
-  // Truth jet arrays
-  TTreeReaderValue<int> njet_truth(reader, "njet_truth");
-  TTreeReaderArray<float> jet_truth_E(reader, "jet_truth_E");
-  TTreeReaderArray<float> jet_truth_Pt(reader, "jet_truth_Pt");
-  TTreeReaderArray<float> jet_truth_Eta(reader, "jet_truth_Eta");
-  TTreeReaderArray<float> jet_truth_Phi(reader, "jet_truth_Phi");
+  // Truth jet arrays (Anti-kT truth; radius matches analysis.jet_cone_size)
+  TTreeReaderValue<int> njet_truth_R3(reader, "njet_truth_AntiKt_Truth_r03");
+  TTreeReaderArray<float> jet_truth_E_R3(reader, "jet_truth_E_AntiKt_Truth_r03");
+  TTreeReaderArray<float> jet_truth_Pt_R3(reader, "jet_truth_Pt_AntiKt_Truth_r03");
+  TTreeReaderArray<float> jet_truth_Eta_R3(reader, "jet_truth_Eta_AntiKt_Truth_r03");
+  TTreeReaderArray<float> jet_truth_Phi_R3(reader, "jet_truth_Phi_AntiKt_Truth_r03");
 
-  // Reco jet arrays
-  TTreeReaderValue<int> njet(reader, "njet");
-  TTreeReaderArray<float> jet_E(reader, "jet_E");
-  TTreeReaderArray<float> jet_Pt(reader, "jet_Pt");
-  TTreeReaderArray<float> jet_Eta(reader, "jet_Eta");
-  TTreeReaderArray<float> jet_Phi(reader, "jet_Phi");
+  TTreeReaderValue<int> njet_truth_R4(reader, "njet_truth_AntiKt_Truth_r04");
+  TTreeReaderArray<float> jet_truth_E_R4(reader, "jet_truth_E_AntiKt_Truth_r04");
+  TTreeReaderArray<float> jet_truth_Pt_R4(reader, "jet_truth_Pt_AntiKt_Truth_r04");
+  TTreeReaderArray<float> jet_truth_Eta_R4(reader, "jet_truth_Eta_AntiKt_Truth_r04");
+  TTreeReaderArray<float> jet_truth_Phi_R4(reader, "jet_truth_Phi_AntiKt_Truth_r04");
+
+  TTreeReaderValue<int> &njet_truth = use_jet_r04 ? njet_truth_R4 : njet_truth_R3;
+  TTreeReaderArray<float> &jet_truth_E = use_jet_r04 ? jet_truth_E_R4 : jet_truth_E_R3;
+  TTreeReaderArray<float> &jet_truth_Pt = use_jet_r04 ? jet_truth_Pt_R4 : jet_truth_Pt_R3;
+  TTreeReaderArray<float> &jet_truth_Eta = use_jet_r04 ? jet_truth_Eta_R4 : jet_truth_Eta_R3;
+  TTreeReaderArray<float> &jet_truth_Phi = use_jet_r04 ? jet_truth_Phi_R4 : jet_truth_Phi_R3;
+
+  // Reco jet arrays (Anti-kT tower; radius from analysis.jet_cone_size)
+  TTreeReaderValue<int> njet_R3(reader, "njet_AntiKt_Tower_r03_Sub1");
+  TTreeReaderArray<float> jet_E_R3(reader, "jet_E_AntiKt_Tower_r03_Sub1");
+  TTreeReaderArray<float> jet_Pt_R3(reader, "jet_Pt_AntiKt_Tower_r03_Sub1");
+  TTreeReaderArray<float> jet_Eta_R3(reader, "jet_Eta_AntiKt_Tower_r03_Sub1");
+  TTreeReaderArray<float> jet_Phi_R3(reader, "jet_Phi_AntiKt_Tower_r03_Sub1");
+
+  TTreeReaderValue<int> njet_R4(reader, "njet_AntiKt_Tower_r04_Sub1");
+  TTreeReaderArray<float> jet_E_R4(reader, "jet_E_AntiKt_Tower_r04_Sub1");
+  TTreeReaderArray<float> jet_Pt_R4(reader, "jet_Pt_AntiKt_Tower_r04_Sub1");
+  TTreeReaderArray<float> jet_Eta_R4(reader, "jet_Eta_AntiKt_Tower_r04_Sub1");
+  TTreeReaderArray<float> jet_Phi_R4(reader, "jet_Phi_AntiKt_Tower_r04_Sub1");
+
+  TTreeReaderValue<int> &njet = use_jet_r04 ? njet_R4 : njet_R3;
+  TTreeReaderArray<float> &jet_E = use_jet_r04 ? jet_E_R4 : jet_E_R3;
+  TTreeReaderArray<float> &jet_Pt = use_jet_r04 ? jet_Pt_R4 : jet_Pt_R3;
+  TTreeReaderArray<float> &jet_Eta = use_jet_r04 ? jet_Eta_R4 : jet_Eta_R3;
+  TTreeReaderArray<float> &jet_Phi = use_jet_r04 ? jet_Phi_R4 : jet_Phi_R3;
 
   TFile *fout = new TFile(outfilename.c_str(), "RECREATE");
   fout->cd();

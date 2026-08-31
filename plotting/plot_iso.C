@@ -130,7 +130,7 @@ void plot_iso(string tune = "nom", int lowbin = 0, int highbin = 1)
 
 
   TFile *fdata = TFile::Open("../histMakers/results/data_histo_showershape.root", "READ");
-  TFile *fmc = TFile::Open("../histMakers/results/MC_efficiency_photon20_aa_showershape.root", "READ");
+  TFile *fmc = TFile::Open("../histMakers/results/MC_efficiency_photon_aa_showershape.root", "READ");
   if (!fdata || fdata->IsZombie())
   {
     std::cerr << "Could not open data file." << std::endl;
