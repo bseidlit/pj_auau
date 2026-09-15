@@ -1,0 +1,333 @@
+#config.yaml
+#PhotonJetTrees_v1 pp CERTIFICATION config: sigma-ratio weights only, no vertex reweight (matches PPG12 config_bdt_pjcert.yaml)
+input:
+  photon_jet_file_root_dir: "/sphenix/user/shuhangli/ppg12/FunWithxgboost/"
+  photon_jet_file_branch_dir: "/bdt_split.root"
+  #photon_jet_file_branch_dir: "/bdt_tree.root"
+  data_file: "/sphenix/user/shuhangli/ppg12/anatreemaker/macro_maketree/data/ana521/condorout/part_*_with_bdt_split.root"
+  tree: "slimtree"
+  cluster_node_name: "CLUSTERINFO_CEMC"
+  bdt_model_name: "base_E"
+  # Optional: use different BDT models in different ET bins.
+  # bdt_et_bin_edges has N+1 values; bdt_et_bin_models has N values.
+  # Clusters outside all bins use bdt_model_name as fallback.
+  bdt_et_bin_edges: [8, 15, 35]
+  bdt_et_bin_models: ["base_v3E", "base_v3E"]
+  unfold_input: "results/MC_efficiency_photon5.root"
+
+output:
+  eff_outfile: "results/MC_efficiency"
+  response_outfile: "results/MC_response"
+  data_outfile: "results/data_histo"
+  var_type: "pj_pp_cert"
+  final_outfile: "results/Photon_final"
+
+analysis:
+  isbackground: 0
+  eta_bins: [-0.7, 0.7]
+  #eta_bins: [-0.7, 0.7]
+  vertex_cut: 30.0   # PhotonJetTrees data are skimmed at |z| < 30 cm
+  #vertex_cut: 60.0
+  truth_iso_max: 4.0
+  reco_iso_min: -20.0
+  reco_iso_max_b: 0.490
+  reco_iso_max_s: 0.037
+  #reco_iso_max_b: 0
+  #reco_iso_max_s: 0.0293956
+  #reco_iso_max_b: 0.330117
+  #reco_iso_max_s: 0.025
+  #reco_iso_max_b: 1.08128
+  #reco_iso_max_s: 0.0299107
+  #reco_iso_max_b: -0.109478
+  #reco_iso_max_s: 0.0369506
+  #reco_iso_max_b: 3.0
+  #reco_iso_max_s: 0.0
+  reco_noniso_min_shift: 0.8
+  reco_noniso_max: 20.0
+
+  # L1 trigger-efficiency correction on data clusters: weight *= 1/eps_L1(ET^reco)
+  # Gumbel-CDF parametrization eps_L1(ET) = p0 * exp(-exp(-(ET - mu)/beta))
+  # measured in plot_trigger_bit30.C with scaled[10]/live[30].
+  apply_trigger_eff_correction: 1
+  trigger_eff_p0: 1.000
+  trigger_eff_mu: -2.04
+  trigger_eff_beta: 3.33
+  reco_min_ET: 5.0
+  cone_size: 3
+  eff_dR: 0.1
+  trigger_used: 30
+  pT_bins: [16, 18, 20, 22, 24, 26, 28, 32, 36]   # data photons start at 15 GeV
+  pT_bins_truth: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 45]
+  use_topo_iso: 2  # PhotonJetTrees supports 1: topo R=0.3, 2: topo R=0.4 only
+  iso_threshold: 1
+  iso_hcalonly: 0
+  iso_emcalinnerr: 0.0
+  n_nt_fail: 0
+  weta_fail: 0
+  wphi_fail: 0
+  et1_fail: 0
+  e11_to_e33_fail: 0
+  e32_to_e35_fail: 0
+  bdt_fail: 0
+  weta_on: 1
+  wphi_on: 0
+  et1_on: 0
+  e11_to_e33_on: 0
+  e32_to_e35_on: 0
+  et2_on: 0
+  et3_on: 0
+  et4_on: 0
+  bdt_on: 1
+  mc_iso_shift: 0.1
+  mc_iso_scale: 1.2
+  vertex_reweight_on: 1
+  # Path to data vertex scan output file (h_vertexz). Used for on-the-fly vertex reweighting.
+  # Leave empty ("") to use the pre-made vertex_reweight_file instead.
+  vertex_scan_data_file: ""
+  # Data-driven iterative truth-vertex reweight (standalone tool in
+  # efficiencytool/truth_vertex_reweight/). When on, forces vertex_reweight_on
+  # off and applies w(z_h) (single MC) or w(z_h)*w(z_mb) (double MC) per event.
+  # Flip truth_vertex_reweight_on to 1 to switch the nominal 1.5 mrad
+  # analysis from the f(z_r) reco-level reweight to the truth-level one.
+  truth_vertex_reweight_on: 0
+  truth_vertex_reweight_file: "/sphenix/user/shuhangli/ppg12/efficiencytool/truth_vertex_reweight/output/1p5mrad/reweight.root"
+  fit_option: 1
+  cluster_escale: 1.0
+  cluster_eres: 0.0   # legacy multiplicative smear (retired); see additive eres_data/_mc params below
+  # Additive smearing affects only the truth-matched tight+iso response.
+  # Selection, efficiencies and ABCD yields use calibrated, unsmeared reco ET.
+  # sigma_extra(truth_pT) = sqrt(max(0, sigma_data^2 - sigma_MC^2));
+  # the added Gaussian width is sigma_extra(truth_pT) * truth_pT in GeV.
+  # Nominal data fit: f_energy_example_cE_0p05 (from function_compare_wide.root).
+  cluster_eres_data_p0: 0.15
+  cluster_eres_data_p1: 0.05
+  cluster_eres_data_p2: 0.05
+  # MC fit: PPG12 PYTHIA tight+iso prompt-photon sigma vs ET (smearing OFF), 2-param form.
+  cluster_eres_mc_p0: 0.185
+  cluster_eres_mc_p1: 0.000
+  cluster_eres_mc_p2: 0.040
+  # ET-dependent residual escale non-linearity: cluster_Et *= 1 + slope*(ET - ref_ET).
+  # Nominal slope = 0 (no NL applied); syst variant uses slope = 5e-4 /GeV.
+  cluster_escale_nl_slope: 0.0
+  cluster_escale_nl_ref_ET: 10.0
+  mc_purity_correction: 0
+  mc_purity_correction_file: ""
+
+  # Data-driven tower mask (phi-symmetry z<-2 at tight-selection level).
+  # Nominal production applies this mask symmetrically to data and MC to
+  # correct for MC not emulating all Run-24 data dead towers. Switched on
+  # as nominal on 2026-04-23. Other single-level masks (preselect, common,
+  # OR) are available as systematic cross-checks via VARIANTS in
+  # make_bdt_variations.py.
+  tower_mask_on: 0   # tower indices not in PhotonJetTrees (documented drop)
+  tower_mask_file: "/sphenix/user/shuhangli/ppg12/efficiencytool/tower_masks_bdt_nom.root"
+  tower_mask_name: "mask_phisymm_tight"
+
+  tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_max: 1.0
+    rhad33_min: 0.00
+
+    w72_max: 1.0
+    w72_min: 0.0
+
+    re11_E_max: 1.0
+    re11_E_min: 0.0
+
+    CNN_max: 1.0
+    CNN_min: 0.0
+    #CNN_min: 0.8
+
+    #correlation
+    et1_max: 1.0
+    et1_min: 0.5
+    et1_min_b: 0.5
+    et1_min_s: 0.0
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    #correlation
+    weta_cogx_max: 1.0
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 1.0
+    weta_cogx_max_s: 0.0
+
+
+    wphi_cogx_max: 1.0
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 1.0
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    et2_max: 1.0
+    et2_min: 0.0
+
+    et3_max: 1.0
+    et3_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 1.0
+    bdt_min: 0.7
+    bdt_min_slope: -0.0015625
+    bdt_min_intercept: 0.815625
+
+
+  non_tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_max: 1.0
+    rhad33_min: 0.00
+
+    w72_max: 1.0
+    w72_min: 0.0
+
+    re11_E_max: 1.0
+    re11_E_min: 0.0
+
+    CNN_max: 1.0
+    CNN_min: 0.0
+    #correlation
+    et1_max: 1.0
+    et1_min: 0.6
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    #correlation
+    weta_cogx_max: 1.0
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 1.0
+    weta_cogx_max_s: 0.0
+
+
+    wphi_cogx_max: 1.0
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 1.0
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 0.5
+    bdt_max_slope: 0.0015625
+    bdt_max_intercept: 0.684375
+    bdt_min: 0.02
+
+    bdt_min_intercept: 0.7333333333333333
+    bdt_min_slope: -0.01333333333333333
+
+  common:
+    wr_cogx_bound: 0.0
+    cluster_weta_cogx_bound: 2.0
+
+    npb_cut_on: 0   # NPB score not in PhotonJetTrees (documented drop)
+    npb_score_cut: 0.5
+
+    prob_max: 1.0
+    prob_min: 0.0
+
+    e11_over_e33_max: 0.98
+
+    e11_over_e33_min: 0.0
+
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    et1_max: 1.0
+    et1_min: 0.6
+
+
+
+
+
+
+  # Run range for data processing (-1 = no bound)
+  run_min: 47289
+  run_max: 54000
+  # Optional run list file (one run number per line). If set, only listed runs are processed.
+  run_list_file: ""
+  # Total luminosity (pb^-1) for the selected run range.
+  # Nominal switched to all-z (beam-delivered) 64.3718 pb^-1 on 2026-04-22;
+  # paired with vertex_cut_truth=9999 to widen the MBD-eff truth denominator.
+  lumi: 64.3226   # Bit30Corr (allz) summed over the 1431 runs present in PhotonJetTrees data/pp (lumi_pp.yaml)
+
+  unfold:
+    resultit: 2
+    resultleak: 1
+    reweight: 1
+    # Truth-pT reweight for unfolding response prior. Re-derived 2026-04-27
+    # from R = (data unfolded with iter=1, no-truth-reweight variant) / mc_truth_prior
+    # (both unit-area normalized) on allz nominal with iso 0.490+0.037*ET and the
+    # L1 trigger-efficiency correction enabled. Fit range [8,35] GeV, rational(2,2)
+    # form (parameter-bounded). Iter=1 captures the prior-bias correction on the
+    # first round of iterative-prior reweighting. Loader: RecoEffCalculator_TTreeReader.C ~line 606.
+    truth_reweight:
+      formula: "([0] + [1]*x + [3]*x*x) / (1 + [2]*x + [4]*x*x)"
+      params: [4.05592, -0.984728, -0.478818, 0.0723232, 0.0522681]
+      xmin: 0
+      xmax: 100
+      clamp_pT_min: 10
+      clamp_pT_max: 30
+
+
+
+
+  lumi_target: 64.3226
+  vertex_cut_truth: 9999.0
+
+# ---------------------------------------------------------------------------
+# PhotonJetTrees_v1 adapter block (read by photonjet/histmakers/PhotonJetConfig.h)
+# ---------------------------------------------------------------------------
+photonjet:
+  release: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1
+  data_files_list: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/data/pp/files.txt
+  sim_signal_files_list: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/simulation/pp_photonjet/files.txt
+  sim_inclusive_files_list: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/simulation/pp_inclusive/files.txt
+  system: pp                    # pp | auau
+  threshold_source: formula     # pp: formula (asserted == stored flags), auau: tree
+  weight_mode: recompute        # sigma_sample/sigma_ref x w_vtx, w_vtx = 1 (no vertex_weight_file) -> same weighting as bdt_pjcert
+  sample_map: ""
+  sample_map_signal: metadata/sample_maps/sample_map_pp_photonjet.yaml
+  sample_map_inclusive: metadata/sample_maps/sample_map_pp_inclusive.yaml
+  vertex_weight_file: ""        # optional TH1 h_vertex_reweight for recompute / sample_map
+  apply_shower_shape_windows: 1 # PPG12 common/tight/non-tight windows from bdt_input_*
+  count_fragmentation_as_signal: 1
+  flag_check: strict            # pp formula data: strict | report (threshold variants) | off
+  random_seed: 42               # keyed by original part/event/candidate; stable across chunking and job order
+  min_photon_et: 15.0           # product floor of the pp data skim (asserted, sim floor is 5)
+  # MBD/vertex efficiency at 30 cm from the PPG12 slimtree run (pjlike variant),
+  # injected after hadd by InjectMbdEff.C. Empty -> efficiency 1 (placeholders).
+  external_mbd_eff_file: /sphenix/user/shuhangli/ppg12/efficiencytool/results/MC_efficiency_bdt_pjcert.root   # PPG12 slimtree, SI-only, no vertex reweight, vertex_cut 30

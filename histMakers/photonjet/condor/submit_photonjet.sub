@@ -1,0 +1,22 @@
+# Serial original-tree worker; parallelism comes from independent jobs.
+universe     = vanilla
+photonjet_dir = .
+setup_script = /sphenix/u/shuhang98/setup.sh
+log_dir = $(photonjet_dir)/logs
+executable   = $(photonjet_dir)/condor/run_photonjet_job.sh
+arguments    = $(config) $(product) $(chunk) $(tag) $(photonjet_dir) $(setup_script)
+
+output       = $(log_dir)/photonjet_$(tag)_$(Cluster).$(Process).out
+error        = $(log_dir)/photonjet_$(tag)_$(Cluster).$(Process).err
+log          = /tmp/photonjet_$(Cluster).log
+
+# getenv is not allowed on this pool and the condor log must be under /tmp (pool policy);
+# run_photonjet_job.sh sources the environment itself.
+request_memory = 4GB
+request_disk   = 5GB
+request_cpus   = 1
+
+PeriodicHold   = (NumJobStarts>=1 && JobStatus == 1)
+Notification   = Never
+
+queue config,product,chunk,tag from $(list_file)

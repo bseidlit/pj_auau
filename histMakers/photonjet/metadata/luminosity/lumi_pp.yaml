@@ -1,0 +1,217 @@
+# Paths relocated during the 2026-09-11 reorganization; original census date and values retained.
+product: data/pp
+release: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1
+files_txt: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/data/pp/files.txt
+tree: events
+branch: run
+generated: '2026-09-01T11:37:40'
+n_parts: 5374
+n_parts_nonempty: 5066
+n_parts_failed: 0
+n_events: 62523
+events_per_part:
+  min: 0
+  max: 146
+  mean: 11.634350576851507
+n_runs: 1431
+run_min: 47289
+run_max: 53864
+run_list_file: metadata/luminosity/run_list_pp.txt
+lumi_list_allz: /gpfs/mnt/gpfs02/sphenix/user/shuhangli/ppg12/lumi/allzLumi_fromJoey.list
+lumi_list_60cm: /gpfs/mnt/gpfs02/sphenix/user/shuhangli/ppg12/lumi/60cmLumi_fromJoey.list
+lumi_pass_used: last
+lumi_list_allz_blocks:
+- block: 1
+  n_runs: 1567
+  bit30corr_sum_all_runs_pb: 64.3718
+lumi_list_60cm_blocks:
+- block: 1
+  n_runs: 1567
+  bit30corr_sum_all_runs_pb: 49.2732
+- block: 2
+  n_runs: 1567
+  bit30corr_sum_all_runs_pb: 49.5621
+lumi_bit30corr_allz_pb: 64.3226
+lumi_bit30uc_allz_pb: 58.0988
+lumi_bit30corr_60cm_pb: 49.5618
+lumi_bit30uc_60cm_pb: 45.0539
+lumi_list_total_bit30corr_allz_pb: 64.3718
+lumi_list_total_bit30corr_60cm_pb: 49.5621
+runs_in_tree_and_lumi_list: 1430
+runs_missing_from_lumi_list:
+  n: 1
+  n_events: 83
+  event_share: 0.0013275114757769141
+  runs:
+  - 51161
+runs_missing_from_lumi_list_60cm:
+  n: 1
+  runs:
+  - 51161
+runs_in_lumi_list_not_in_tree:
+  n: 137
+  lumi_bit30corr_allz_pb: 0.0492
+  lumi_bit30corr_60cm_pb: 0.0003
+  runs:
+  - 48166
+  - 48172
+  - 48244
+  - 49247
+  - 51487
+  - 51502
+  - 51504
+  - 51505
+  - 51506
+  - 51508
+  - 51509
+  - 51510
+  - 51511
+  - 51512
+  - 51517
+  - 51518
+  - 51520
+  - 51562
+  - 51563
+  - 51564
+  - 51565
+  - 51570
+  - 51572
+  - 51573
+  - 51574
+  - 51575
+  - 51576
+  - 51605
+  - 51607
+  - 51615
+  - 51616
+  - 51618
+  - 51619
+  - 51735
+  - 51736
+  - 51740
+  - 51741
+  - 51777
+  - 51778
+  - 51824
+  - 51825
+  - 51837
+  - 51905
+  - 51914
+  - 51915
+  - 51933
+  - 51934
+  - 51997
+  - 51998
+  - 52025
+  - 52026
+  - 52043
+  - 52060
+  - 52065
+  - 52067
+  - 52097
+  - 52099
+  - 52101
+  - 52102
+  - 52265
+  - 52286
+  - 52302
+  - 52452
+  - 52466
+  - 52467
+  - 52468
+  - 52481
+  - 52508
+  - 52518
+  - 52519
+  - 52558
+  - 52584
+  - 52585
+  - 52586
+  - 52592
+  - 52610
+  - 52613
+  - 52623
+  - 52624
+  - 52625
+  - 52626
+  - 52627
+  - 52628
+  - 52629
+  - 52649
+  - 52651
+  - 52677
+  - 52678
+  - 52702
+  - 52717
+  - 52718
+  - 52760
+  - 52761
+  - 52777
+  - 52805
+  - 52844
+  - 52857
+  - 52873
+  - 52887
+  - 52888
+  - 52895
+  - 52896
+  - 52897
+  - 52898
+  - 52905
+  - 52910
+  - 53046
+  - 53062
+  - 53064
+  - 53065
+  - 53066
+  - 53067
+  - 53068
+  - 53079
+  - 53165
+  - 53210
+  - 53236
+  - 53304
+  - 53329
+  - 53330
+  - 53331
+  - 53332
+  - 53346
+  - 53364
+  - 53383
+  - 53578
+  - 53630
+  - 53646
+  - 53680
+  - 53705
+  - 53706
+  - 53735
+  - 53752
+  - 53768
+  - 53780
+  - 53827
+  - 53852
+periods:
+  0mrad:
+    run_selection: run < 51274
+    n_runs: 747
+    run_min: 47289
+    run_max: 51237
+    n_events: 36134
+    event_share: 0.5779313212737712
+    lumi_bit30corr_allz_pb: 47.1584
+    lumi_bit30uc_allz_pb: 41.5505
+    lumi_bit30corr_60cm_pb: 32.6828
+    lumi_bit30uc_60cm_pb: 28.7805
+    runs_missing_from_lumi_list: 1
+  1p5mrad:
+    run_selection: run >= 51274
+    n_runs: 684
+    run_min: 51274
+    run_max: 53864
+    n_events: 26389
+    event_share: 0.4220686787262288
+    lumi_bit30corr_allz_pb: 17.1642
+    lumi_bit30uc_allz_pb: 16.5483
+    lumi_bit30corr_60cm_pb: 16.879
+    lumi_bit30uc_60cm_pb: 16.2735
+    runs_missing_from_lumi_list: 0

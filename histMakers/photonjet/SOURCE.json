@@ -1,0 +1,359 @@
+{
+  "source_commit": "638ddc8acb711a8f532a08567d8409755baa5912",
+  "files": [
+    {
+      "source": "efficiencytool/photonjet/.gitignore",
+      "copy": ".gitignore",
+      "source_sha256": "64c6cea20c20ace942065270d28f25b8eec2febc04f263aa82212899833120c3",
+      "copy_sha256": "05cf35cf08679997214131d3104c90def7eafbc94f6b098224c86885cdca4771"
+    },
+    {
+      "source": "efficiencytool/photonjet/README.md",
+      "copy": "README.md",
+      "source_sha256": "017b1eb274ef13f2139a7f05b545a353bff0a842ee071b9a9f7aea822f4940e2",
+      "copy_sha256": "6a685b9ed58b65ec6129d97a03cae1691ac016c36526fa4e0c146fa00f308b7f"
+    },
+    {
+      "source": "efficiencytool/photonjet/condor/run_photonjet_job.sh",
+      "copy": "condor/run_photonjet_job.sh",
+      "source_sha256": "5e304bb3174b24acd9b7eb739c27d63f0ae388c24a1210e799f8e6be1313ad15",
+      "copy_sha256": "0d78475ba06be98b1555dfcc7e8aa749085693b7ebf1f77af4fcabb3d5d5d56b"
+    },
+    {
+      "source": "efficiencytool/photonjet/condor/submit_photonjet.sub",
+      "copy": "condor/submit_photonjet.sub",
+      "source_sha256": "12fd991da1f94467c4b1e208bbf545fd36d6a98da21129724f08ff3c7be645a9",
+      "copy_sha256": "30c2fdbf29c304bf46cfb9f2f0d2630bc19c52ca4ec0854c314207a398dd360a"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/auau/config_pj_auau_c00_20.yaml",
+      "copy": "configs/auau/config_pj_auau_c00_20.yaml",
+      "source_sha256": "3036b418a13317dc3ce15d2a74fcd3d655de5a9079fbabcc603cc1b0aeaeddc9",
+      "copy_sha256": "1ab94d2f071f2bc04f4c05b80d6edd5fb6d33d81111b6068468aba25a6125920"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/auau/config_pj_auau_c20_50.yaml",
+      "copy": "configs/auau/config_pj_auau_c20_50.yaml",
+      "source_sha256": "5fb056296f213548cbe19390bd794d3640a48c166a3a54c65c0ec6bfff709a82",
+      "copy_sha256": "6431a598385f6495090f90b89c2fbd2de6ffe64f4236a6da80afb4b2810fd089"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/auau/config_pj_auau_c50_80.yaml",
+      "copy": "configs/auau/config_pj_auau_c50_80.yaml",
+      "source_sha256": "345fc3167d592a40b4410d9e96cc781ee84a13b7648348236b1d84221d81e4fd",
+      "copy_sha256": "447520fbd7db34f940e406a584d04e5af3d7e4bd302a5488abd7cedda7ff70a9"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/pp/config_pj_pp_1p5.yaml",
+      "copy": "configs/pp/config_pj_pp_1p5.yaml",
+      "source_sha256": "97cc34ac695a1456f0167c245ba1d67ccb7f54396658241703d3c8dcedb55f97",
+      "copy_sha256": "10d51a8de2e9d1aea36a4d1b32fa357d542ebe7c2ef52daf17de1609b4c5d4f8"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/pp/config_pj_pp_cert.yaml",
+      "copy": "configs/pp/config_pj_pp_cert.yaml",
+      "source_sha256": "1f4b56d39b98cb83e25065ff707a17295ac300ce5e81e8ec06a5c5bf1d4bbce7",
+      "copy_sha256": "ac654d2b5c07087799dced3bb6c81d5c030edf720aca88a583e7340deea079d4"
+    },
+    {
+      "source": "efficiencytool/photonjet/configs/pp/config_pj_pp_nom.yaml",
+      "copy": "configs/pp/config_pj_pp_nom.yaml",
+      "source_sha256": "0f01ea59031a556e22f9917653f421135ca038b911fc2371cf2f3baf02c82bc4",
+      "copy_sha256": "9514e117b8b9ccb846c3fd05f5c5013d16c4b9bb9c5b0517a1919df06300dc1f"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/InjectMbdEff.C",
+      "copy": "histmakers/InjectMbdEff.C",
+      "source_sha256": "ad24ac31ae12a7ee1d5897f2b61b69067eb64c4b202a7ce6fff127075396cd2a",
+      "copy_sha256": "ad24ac31ae12a7ee1d5897f2b61b69067eb64c4b202a7ce6fff127075396cd2a"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetConfig.h",
+      "copy": "histmakers/PhotonJetConfig.h",
+      "source_sha256": "7fbda0024aa68f6acbde51ce05a484b59ee84c02b883b6e05c460829abf7ba96",
+      "copy_sha256": "7fbda0024aa68f6acbde51ce05a484b59ee84c02b883b6e05c460829abf7ba96"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetHistMaker.C",
+      "copy": "histmakers/PhotonJetHistMaker.C",
+      "source_sha256": "a0ab7164c8db796774919ae371e42d83c64b0e50c613b0221549c12084c83db1",
+      "copy_sha256": "a0ab7164c8db796774919ae371e42d83c64b0e50c613b0221549c12084c83db1"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetHistograms.h",
+      "copy": "histmakers/PhotonJetHistograms.h",
+      "source_sha256": "73369900d317208469387c39cd1b98a943511984771c515c6e7aa7e21b5560da",
+      "copy_sha256": "73369900d317208469387c39cd1b98a943511984771c515c6e7aa7e21b5560da"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetIO.h",
+      "copy": "histmakers/PhotonJetIO.h",
+      "source_sha256": "6dcc27ff2dd1e9f15f0e3bc2131f1834c2185944c7bff71d2118324703eaae90",
+      "copy_sha256": "1cf73114b653b5e5b9160ba2c474890c0ae450778e1aa0fc484c132f7ce763b1"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetPhysics.h",
+      "copy": "histmakers/PhotonJetPhysics.h",
+      "source_sha256": "8e4f46aa7fd2910b4c9f5071bef84d15df99432751fe9fc03c293ba760d88a49",
+      "copy_sha256": "c3f635f4c92e8ebc84a592f114e67d2ca5721ca0790628942bdad67bc6176066"
+    },
+    {
+      "source": "efficiencytool/photonjet/histmakers/PhotonJetReader.h",
+      "copy": "histmakers/PhotonJetReader.h",
+      "source_sha256": "08ff5277fc07244cf6301e128de0b735604e29fa7ac29fc2f40a7d7d54fe8ed1",
+      "copy_sha256": "08ff5277fc07244cf6301e128de0b735604e29fa7ac29fc2f40a7d7d54fe8ed1"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/luminosity/lumi_auau.yaml",
+      "copy": "metadata/luminosity/lumi_auau.yaml",
+      "source_sha256": "db47ca14985a56a128c12a81173f6d21d8c85663b8acfbb631fea2cf551c0fe5",
+      "copy_sha256": "4614df7a06d91e1e523b1630ce5c2c91c11dc5194af523ec5a1e4d21b1a3ce1b"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/luminosity/lumi_pp.yaml",
+      "copy": "metadata/luminosity/lumi_pp.yaml",
+      "source_sha256": "f6331386180cfa1bb6212256aa97def69457dec19edc61bb374dfd98518f69e8",
+      "copy_sha256": "de17f9342cdbd6183aea6ee9fa1c21efb3098b42648b76f419df882e842fe419"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/luminosity/run_list_auau.txt",
+      "copy": "metadata/luminosity/run_list_auau.txt",
+      "source_sha256": "5c5c9e059572620bf1ad6d7d383574532612438028ccb69f1c5246f77c2fba70",
+      "copy_sha256": "5c5c9e059572620bf1ad6d7d383574532612438028ccb69f1c5246f77c2fba70"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/luminosity/run_list_pp.txt",
+      "copy": "metadata/luminosity/run_list_pp.txt",
+      "source_sha256": "7e8e56dda7d09e4884336c64125c2e7d9631a09e9a70bfe06b418526f9bb03ff",
+      "copy_sha256": "7e8e56dda7d09e4884336c64125c2e7d9631a09e9a70bfe06b418526f9bb03ff"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/sample_maps/sample_map_auau_embedded_inclusive.yaml",
+      "copy": "metadata/sample_maps/sample_map_auau_embedded_inclusive.yaml",
+      "source_sha256": "56fc404eb4449b869e6eeca932fc410ff4ea3dfde5ea8d79647fd800f401e916",
+      "copy_sha256": "56fc404eb4449b869e6eeca932fc410ff4ea3dfde5ea8d79647fd800f401e916"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/sample_maps/sample_map_auau_embedded_photonjet.yaml",
+      "copy": "metadata/sample_maps/sample_map_auau_embedded_photonjet.yaml",
+      "source_sha256": "11655368d751bf6299c65f652f8e2bde611b0c9b550fa4f87ab610f1f3454e1e",
+      "copy_sha256": "11655368d751bf6299c65f652f8e2bde611b0c9b550fa4f87ab610f1f3454e1e"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/sample_maps/sample_map_pp_inclusive.yaml",
+      "copy": "metadata/sample_maps/sample_map_pp_inclusive.yaml",
+      "source_sha256": "a19ce9cac0e48d29a8094b646adbaa5bcf9b4477acbfe3443dbbf6958ef03b59",
+      "copy_sha256": "a19ce9cac0e48d29a8094b646adbaa5bcf9b4477acbfe3443dbbf6958ef03b59"
+    },
+    {
+      "source": "efficiencytool/photonjet/metadata/sample_maps/sample_map_pp_photonjet.yaml",
+      "copy": "metadata/sample_maps/sample_map_pp_photonjet.yaml",
+      "source_sha256": "b7af5cf94ad0a0d3e49e39c31a66d655fed320e4d92b5744c7a07d1f057d34d2",
+      "copy_sha256": "b7af5cf94ad0a0d3e49e39c31a66d655fed320e4d92b5744c7a07d1f057d34d2"
+    },
+    {
+      "source": "efficiencytool/photonjet/oneforall_photonjet.sh",
+      "copy": "oneforall_photonjet.sh",
+      "source_sha256": "748a614fd364a053fc00bb169cb83725b691769d9e847b089b5a85fa69341e12",
+      "copy_sha256": "25b880a7570732e0941d71aacadc3455f9976e0020516c583b66f0b727bc5b9f"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/PhotonJetPlotInput.h",
+      "copy": "plotting/PhotonJetPlotInput.h",
+      "source_sha256": "f3a0cc325c1150100ac1c8db8b9345893e209877218a85c536e37fe69388dd58",
+      "copy_sha256": "cb1f3c9d169da1e1bb255e2e893b24948d33f54113a596f63cd8a2245bb93262"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/compare_cutflow_spectra.C",
+      "copy": "plotting/compare_cutflow_spectra.C",
+      "source_sha256": "41ae23115839a779aca2fe136219b80c4bff044dcdb8a76b449e66e4e9d7de30",
+      "copy_sha256": "ecdd534ec617961d47cf4d3c9791df07525523073f0fdf3952fa5670e5d742c9"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/compare_pj_vs_ppg12.C",
+      "copy": "plotting/compare_pj_vs_ppg12.C",
+      "source_sha256": "3a8a2eaa154e8c8469aa96a9628dd20dd5749f487ec4752c21ba340916ec1d3d",
+      "copy_sha256": "f4ec3759da2a4934a37cc519f4ab00357daab6a9313b6a527a9b2db8d08be6cc"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/plot_pj_summary.C",
+      "copy": "plotting/plot_pj_summary.C",
+      "source_sha256": "ba39e61a7757a3f2aa16cefca17d6f760022b7bc6f5b68859b8dae09fc72f485",
+      "copy_sha256": "c66cc18c9ae7cfa3524f202e4670db23c908f297d4e542ebf9781331c14e635a"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/plot_pp_et_levels.C",
+      "copy": "plotting/plot_pp_et_levels.C",
+      "source_sha256": "fcbeb17ac5ae8cd84fbe008d729e188466b864c667128b1c3fbc9a7b277699e9",
+      "copy_sha256": "1795b20c0b2f859b09c94f88eef6fb0e6cdc91a7d9fa039147c122c7c03e5e59"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/plot_pp_et_stages.C",
+      "copy": "plotting/plot_pp_et_stages.C",
+      "source_sha256": "a8d1fa10e9f1fb835e9c55154c49e4b2eb32bffb4d0bee91d228632aa5d7aab1",
+      "copy_sha256": "1d8a246a6c2b0c1e0ee79a7f9a0832d8b1fcf07ddc227bcfd884344927e3cbba"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/plot_pp_final_corrected.C",
+      "copy": "plotting/plot_pp_final_corrected.C",
+      "source_sha256": "17fb22181b41358d17e36c4ce24c3540b79582e24da1b3aadb79430367882294",
+      "copy_sha256": "26b9d83a30264baf0f6c7384d39d9235442d8a96f90441ea96b680888ac9f9cb"
+    },
+    {
+      "source": "efficiencytool/photonjet/plotting/plot_pp_purity_corrected.C",
+      "copy": "plotting/plot_pp_purity_corrected.C",
+      "source_sha256": "678b74199cb8bb8cb52bba6d27f1c7f8338212a235820fafa848f10d08d8b912",
+      "copy_sha256": "4b0fb8bd2b787690b31c09961a0077a1851413b868b79702c1e168c9a2efa171"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/CheckChunks.C",
+      "copy": "scripts/CheckChunks.C",
+      "source_sha256": "b6d1291615bb320d83c65c2f4113287c020d4bb2b2bcc7b8bd441fcdd8e2b57e",
+      "copy_sha256": "b6d1291615bb320d83c65c2f4113287c020d4bb2b2bcc7b8bd441fcdd8e2b57e"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/cfgval.py",
+      "copy": "scripts/cfgval.py",
+      "source_sha256": "1147fe126faf1e8a39e3e2ff77a57c816ecf0dc5e88b3c20314740be0db7233a",
+      "copy_sha256": "1147fe126faf1e8a39e3e2ff77a57c816ecf0dc5e88b3c20314740be0db7233a"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/hadd_photonjet.sh",
+      "copy": "scripts/hadd_photonjet.sh",
+      "source_sha256": "22e547183b1d1fdaf18fe922c5430d0865e95b16370de182007363e4e5d55941",
+      "copy_sha256": "22e547183b1d1fdaf18fe922c5430d0865e95b16370de182007363e4e5d55941"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/inputs.py",
+      "copy": "scripts/inputs.py",
+      "source_sha256": "36864e6e53eade7d25b01207b4e3fdaac0ff671e8cb5f4395af339fd7850a4cb",
+      "copy_sha256": "81ce1af58d71c3b6cfbc6f3907eda21b2d8a9ef632aadc964adbc299228eb68e"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/lumi_from_runs.py",
+      "copy": "scripts/lumi_from_runs.py",
+      "source_sha256": "06ce1c6ca7e438a1650e18f22bfb275dc5065f0bf213d5b95b9d7f679f12b674",
+      "copy_sha256": "06ce1c6ca7e438a1650e18f22bfb275dc5065f0bf213d5b95b9d7f679f12b674"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/make_chunks.py",
+      "copy": "scripts/make_chunks.py",
+      "source_sha256": "65f7d7ab87906c06028ae4db8e622214403367c6315f93e1021526966c2301aa",
+      "copy_sha256": "65f7d7ab87906c06028ae4db8e622214403367c6315f93e1021526966c2301aa"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/sample_map.py",
+      "copy": "scripts/sample_map.py",
+      "source_sha256": "02fe2231d0802d85ee64cf70e5b3e284942139bc387394f06242fbca0b04d1e7",
+      "copy_sha256": "02fe2231d0802d85ee64cf70e5b3e284942139bc387394f06242fbca0b04d1e7"
+    },
+    {
+      "source": "efficiencytool/photonjet/scripts/workflow.py",
+      "copy": "scripts/workflow.py",
+      "source_sha256": "f42b7f5bc8c38e045036da1ff9923d8789a98ad26a67099ecd6f4a6d89254d5b",
+      "copy_sha256": "c3d28cf4bc25fcd40425d0ec99346ba38f9086f2c31a90b4addfa4d57579bf8d"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/cpp_acceptance.py",
+      "copy": "tests/cpp_acceptance.py",
+      "source_sha256": "2f289302ece11b2c6a9237d042a8b4659d03b89fe785664d4bc621b6ab89eb96",
+      "copy_sha256": "2f289302ece11b2c6a9237d042a8b4659d03b89fe785664d4bc621b6ab89eb96"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/cpp_fixtures.py",
+      "copy": "tests/cpp_fixtures.py",
+      "source_sha256": "bbe959c209ce8ccc417ee350c45252d2714f339bc8258553e3f7863c2a794e29",
+      "copy_sha256": "bbe959c209ce8ccc417ee350c45252d2714f339bc8258553e3f7863c2a794e29"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/cpp_validation.py",
+      "copy": "tests/cpp_validation.py",
+      "source_sha256": "c15222148783a5fea4ef037379f57568e9e1dde5a165f3aa6670e3f31657818d",
+      "copy_sha256": "c15222148783a5fea4ef037379f57568e9e1dde5a165f3aa6670e3f31657818d"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/fixtures.py",
+      "copy": "tests/fixtures.py",
+      "source_sha256": "3cb14ca069382461e9f11f08332f44cdf872217a531b807dbcaa3ea74f466e5f",
+      "copy_sha256": "3cb14ca069382461e9f11f08332f44cdf872217a531b807dbcaa3ea74f466e5f"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetConfig.h",
+      "copy": "tests/reference/PhotonJetConfig.h",
+      "source_sha256": "52cac45c75cec50e17684fae330309d8bad95af19d27ef5cf9e78bebfc3d2507",
+      "copy_sha256": "52cac45c75cec50e17684fae330309d8bad95af19d27ef5cf9e78bebfc3d2507"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetHistMaker.C",
+      "copy": "tests/reference/PhotonJetHistMaker.C",
+      "source_sha256": "e0c9bb36528a585b3a308cc10ab41432899c60dfa3bb0e7d6a31e841caca59a0",
+      "copy_sha256": "e0c9bb36528a585b3a308cc10ab41432899c60dfa3bb0e7d6a31e841caca59a0"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetIO.h",
+      "copy": "tests/reference/PhotonJetIO.h",
+      "source_sha256": "53f30852b47767335ee13c08d6bf73d52f6de0bd9d55827b999528410ced2d3f",
+      "copy_sha256": "b1bcdc626f4bdeeec20ca8cb528ef8dd8725a72c4e6fcfdd8957f411aff6eb98"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetReader.h",
+      "copy": "tests/reference/PhotonJetReader.h",
+      "source_sha256": "05fb3261c3d1f09a67b86c0befeadea6436876b2a175f869e2095dcb360098cc",
+      "copy_sha256": "05fb3261c3d1f09a67b86c0befeadea6436876b2a175f869e2095dcb360098cc"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetSelection.h",
+      "copy": "tests/reference/PhotonJetSelection.h",
+      "source_sha256": "264a9899e49552277b63d8bc613eb808e3c5d26c03c72189b82bd6dc0447d972",
+      "copy_sha256": "264a9899e49552277b63d8bc613eb808e3c5d26c03c72189b82bd6dc0447d972"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/PhotonJetWeights.h",
+      "copy": "tests/reference/PhotonJetWeights.h",
+      "source_sha256": "83a1f45540d83bda62d3e464bd6fa58016221e335e69f260b24bda4d4e6605f6",
+      "copy_sha256": "a6c0b37ba375c7421fdd6709df09287a7d89f21c1fdb4fcc424451ccf3baec5d"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/reference/README.md",
+      "copy": "tests/reference/README.md",
+      "source_sha256": "110ae5e4de271247829da2cdd4396c33443749a75fde35ace4e853059ac078f4",
+      "copy_sha256": "110ae5e4de271247829da2cdd4396c33443749a75fde35ace4e853059ac078f4"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/rng_vectors.json",
+      "copy": "tests/rng_vectors.json",
+      "source_sha256": "89cfb4b805f87deb48d901158a1ad00f560d92bef85df3cbfd6c2e8151412cbb",
+      "copy_sha256": "89cfb4b805f87deb48d901158a1ad00f560d92bef85df3cbfd6c2e8151412cbb"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/test_cpp_inputs.py",
+      "copy": "tests/test_cpp_inputs.py",
+      "source_sha256": "41bd976fa3cace8761c4760920dddb94b658523a145f8571a32b4d653f12f4b1",
+      "copy_sha256": "41bd976fa3cace8761c4760920dddb94b658523a145f8571a32b4d653f12f4b1"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/test_cpp_physics.py",
+      "copy": "tests/test_cpp_physics.py",
+      "source_sha256": "ac9ccbe4e422e238928449bdae8edb1b57bd6f07c3ca298196ba16072b13a283",
+      "copy_sha256": "4d9efb8b23d5e7a9eb035a08ff2c14a90301390c55db364b26fd9d4ae58de9c5"
+    },
+    {
+      "source": "efficiencytool/photonjet/tests/test_cpp_workflow.py",
+      "copy": "tests/test_cpp_workflow.py",
+      "source_sha256": "a0be7c7ed8f93699b04b83fd7fa3dd59a9fa4c6650e80d5a2f8ec79bdb72aa18",
+      "copy_sha256": "a0be7c7ed8f93699b04b83fd7fa3dd59a9fa4c6650e80d5a2f8ec79bdb72aa18"
+    },
+    {
+      "source": "efficiencytool/CrossSectionWeights.h",
+      "copy": "support/CrossSectionWeights.h",
+      "source_sha256": "2b385efd1e61c54f9046a97be8fe18f9a079fcced98c5754e7896b8310794535",
+      "copy_sha256": "2b385efd1e61c54f9046a97be8fe18f9a079fcced98c5754e7896b8310794535"
+    },
+    {
+      "source": "efficiencytool/CalculatePhotonYield.C",
+      "copy": "support/CalculatePhotonYield.C",
+      "source_sha256": "6b3e6013b55d917e259e4588d56103e197c4d797687d58c56f307a9ba7eae4be",
+      "copy_sha256": "0d24a4e475e40651bf9557549c60d5bed50fae2b62b2c7fae12872ab7cf93855"
+    }
+  ]
+}

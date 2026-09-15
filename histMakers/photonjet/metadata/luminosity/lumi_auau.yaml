@@ -1,0 +1,20 @@
+# Paths relocated during the 2026-09-11 reorganization; original census date and values retained.
+product: data/auau
+release: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1
+files_txt: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/data/auau/files.txt
+tree: events
+branch: run
+generated: '2026-09-01T11:44:16'
+n_parts: 23300
+n_parts_nonempty: 19524
+n_parts_failed: 0
+n_events: 217811
+events_per_part:
+  min: 0
+  max: 2900
+  mean: 9.348111587982833
+n_runs: 2048
+run_min: 68212
+run_max: 78954
+run_list_file: metadata/luminosity/run_list_auau.txt
+note: 'Au+Au: no per-run lumi list available; run census only.'

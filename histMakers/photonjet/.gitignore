@@ -1,0 +1,22 @@
+# Local assistant pilot and evidence, following the repository's tooling policy.
+/.analysis-context/
+/.analysis-context
+/AGENTS.md
+/CLAUDE.md
+/LLM_HANDOFF.md
+
+# Reusable generated inputs and per-variation execution manifests.
+/prepared/
+/chunks/
+
+# Local artifacts and Python caches.
+/results/
+/logs/
+/figures/
+__pycache__/
+*.pyc
+
+# The parent repository ignores *.txt; these two files are source metadata.
+!/metadata/luminosity/run_list_pp.txt
+!/metadata/luminosity/run_list_auau.txt
+!/requirements.txt

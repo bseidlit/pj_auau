@@ -1,0 +1,23 @@
+{
+  "ROOT_version": "6.32.06",
+  "engine": "TRandomMixMax17",
+  "distribution": "TRandom::Gaus(0,1)",
+  "vectors": [
+    {
+      "seed": "1",
+      "gaussian": "-0x1.ac58388385011p-2"
+    },
+    {
+      "seed": "4294967297",
+      "gaussian": "-0x1.253ca614b4b68p-2"
+    },
+    {
+      "seed": "18446744073709551615",
+      "gaussian": "-0x1.d04dce1d12680p-4"
+    },
+    {
+      "seed": "81985529216486895",
+      "gaussian": "0x1.9986791725da4p-1"
+    }
+  ]
+}

@@ -1,0 +1,365 @@
+product: auau_embedded_photonjet
+release: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1
+header_vs_git_head:
+  header: efficiencytool/CrossSectionWeights.h
+  constants_differing_from_HEAD:
+    herwig_photon10cross:
+      working_tree: 362.808
+      HEAD:
+    herwig_photon20cross:
+      working_tree: 53.401
+      HEAD:
+    jet8cross:
+      working_tree: 4929000.0
+      HEAD: 11500000.0
+  note: values quoted in this file come from the working-tree header; the p+p tree event_weight convention was cross-checked against both
+files_txt: /sphenix/tg/tg01/bulk/jbennett/PhotonJetTrees_v1/simulation/auau_embedded_photonjet/files.txt
+generated: '2026-09-01T11:43:37'
+n_parts: 1434
+parts_opened: 44
+stride: 40
+expected_order:
+- photon10
+- photon20
+found_order:
+- photon10
+- photon20
+order_matches_expected: true
+boundaries:
+- 718
+boundary_checks:
+- boundary: 718
+  left_parts:
+  - 716
+  - 717
+  left_labels:
+  - photon10
+  - photon10
+  right_parts:
+  - 718
+  - 719
+  right_labels:
+  - photon20
+  - photon20
+  consistent: true
+all_boundaries_consistent: true
+ambiguities: []
+ranges:
+- first: 0
+  last: 717
+  sample: photon10
+  n_parts: 718
+  ppg12_sample: photon10
+  header: efficiencytool/CrossSectionWeights.h
+  truth_window:
+    variable: max truth photon pT (GeV)
+    low: 14.0
+    high: 22.0
+    interval: '[14, 22)'
+  weight:
+    expr: photon10cross/photon20cross
+    photon10cross: 6944.675
+    photon20cross: 130.4461
+    value: 53.2378890591593
+  evidence:
+    classifier: per-event leading prompt truth photon pT (truthPhotons, prompt_class==1)
+    rule: nearest of [5, 10, 20] to p5 + 1.0
+    parts_classified_in_range: 23
+    parts_empty_in_range: 0
+    all_classified_parts_agree: true
+    leading_pt_p5_min: 10.953266198687611
+    leading_pt_p5_max: 11.957256535040443
+    leading_pt_p50_min: 13.299028590360939
+    leading_pt_p50_max: 20.595964773076865
+    parts:
+    - part: 0
+      label: photon10
+      p5: 11.006
+      p50: 13.311
+      n_events: 14000
+      n_events_grouped: 7371
+    - part: 40
+      label: photon10
+      p5: 11.015
+      p50: 13.32
+      n_events: 14000
+      n_events_grouped: 7406
+    - part: 80
+      label: photon10
+      p5: 11.076
+      p50: 13.326
+      n_events: 14000
+      n_events_grouped: 7386
+    - part: 120
+      label: photon10
+      p5: 11.167
+      p50: 13.388
+      n_events: 13998
+      n_events_grouped: 7374
+    - part: 160
+      label: photon10
+      p5: 10.982
+      p50: 13.33
+      n_events: 13998
+      n_events_grouped: 7288
+    - part: 200
+      label: photon10
+      p5: 10.977
+      p50: 13.344
+      n_events: 13997
+      n_events_grouped: 7418
+    - part: 240
+      label: photon10
+      p5: 10.998
+      p50: 13.348
+      n_events: 14000
+      n_events_grouped: 7355
+    - part: 280
+      label: photon10
+      p5: 11.074
+      p50: 13.344
+      n_events: 13990
+      n_events_grouped: 7322
+    - part: 320
+      label: photon10
+      p5: 11.006
+      p50: 13.312
+      n_events: 14000
+      n_events_grouped: 7384
+    - part: 360
+      label: photon10
+      p5: 11.042
+      p50: 13.351
+      n_events: 14000
+      n_events_grouped: 7291
+    - part: 400
+      label: photon10
+      p5: 11.08
+      p50: 13.342
+      n_events: 14000
+      n_events_grouped: 7248
+    - part: 440
+      label: photon10
+      p5: 11.071
+      p50: 13.331
+      n_events: 13996
+      n_events_grouped: 7439
+    - part: 480
+      label: photon10
+      p5: 11.079
+      p50: 13.362
+      n_events: 13934
+      n_events_grouped: 7347
+    - part: 520
+      label: photon10
+      p5: 11.123
+      p50: 13.369
+      n_events: 13911
+      n_events_grouped: 7303
+    - part: 560
+      label: photon10
+      p5: 11.078
+      p50: 13.331
+      n_events: 13931
+      n_events_grouped: 7262
+    - part: 600
+      label: photon10
+      p5: 11.171
+      p50: 13.35
+      n_events: 13998
+      n_events_grouped: 7472
+    - part: 640
+      label: photon10
+      p5: 11.11
+      p50: 13.381
+      n_events: 14000
+      n_events_grouped: 7305
+    - part: 680
+      label: photon10
+      p5: 11.095
+      p50: 13.388
+      n_events: 13998
+      n_events_grouped: 7396
+    - part: 700
+      label: photon10
+      p5: 10.953
+      p50: 13.312
+      n_events: 13998
+      n_events_grouped: 7426
+    - part: 710
+      label: photon10
+      p5: 10.99
+      p50: 13.299
+      n_events: 13839
+      n_events_grouped: 7309
+    - part: 715
+      label: photon10
+      p5: 10.985
+      p50: 13.343
+      n_events: 14000
+      n_events_grouped: 7450
+    - part: 716
+      label: photon10
+      p5: 10.995
+      p50: 13.314
+      n_events: 14000
+      n_events_grouped: 7365
+    - part: 717
+      label: photon10
+      p5: 11.957
+      p50: 20.596
+      n_events: 10872
+      n_events_grouped: 6529
+- first: 718
+  last: 1433
+  sample: photon20
+  n_parts: 716
+  ppg12_sample: photon20
+  header: efficiencytool/CrossSectionWeights.h
+  truth_window:
+    variable: max truth photon pT (GeV)
+    low: 22.0
+    high: 200.0
+    interval: '[22, 200)'
+  weight:
+    expr: '1.0'
+    photon20cross: 130.4461
+    value: 1.0
+  evidence:
+    classifier: per-event leading prompt truth photon pT (truthPhotons, prompt_class==1)
+    rule: nearest of [5, 10, 20] to p5 + 1.0
+    parts_classified_in_range: 21
+    parts_empty_in_range: 0
+    all_classified_parts_agree: true
+    leading_pt_p5_min: 18.713023532143687
+    leading_pt_p5_max: 19.020479512947094
+    leading_pt_p50_min: 21.65885498133401
+    leading_pt_p50_max: 21.795648627204034
+    parts:
+    - part: 718
+      label: photon20
+      p5: 18.713
+      p50: 21.667
+      n_events: 14000
+      n_events_grouped: 9001
+    - part: 719
+      label: photon20
+      p5: 18.92
+      p50: 21.725
+      n_events: 13998
+      n_events_grouped: 8945
+    - part: 720
+      label: photon20
+      p5: 18.899
+      p50: 21.735
+      n_events: 13999
+      n_events_grouped: 8880
+    - part: 760
+      label: photon20
+      p5: 18.902
+      p50: 21.746
+      n_events: 13999
+      n_events_grouped: 8998
+    - part: 800
+      label: photon20
+      p5: 18.772
+      p50: 21.67
+      n_events: 14000
+      n_events_grouped: 9073
+    - part: 840
+      label: photon20
+      p5: 18.931
+      p50: 21.713
+      n_events: 14000
+      n_events_grouped: 8969
+    - part: 880
+      label: photon20
+      p5: 18.904
+      p50: 21.733
+      n_events: 14000
+      n_events_grouped: 8931
+    - part: 920
+      label: photon20
+      p5: 18.879
+      p50: 21.717
+      n_events: 13999
+      n_events_grouped: 8995
+    - part: 960
+      label: photon20
+      p5: 19.02
+      p50: 21.758
+      n_events: 14000
+      n_events_grouped: 8983
+    - part: 1000
+      label: photon20
+      p5: 18.85
+      p50: 21.712
+      n_events: 14000
+      n_events_grouped: 9002
+    - part: 1040
+      label: photon20
+      p5: 18.943
+      p50: 21.662
+      n_events: 13972
+      n_events_grouped: 8905
+    - part: 1080
+      label: photon20
+      p5: 18.952
+      p50: 21.796
+      n_events: 13999
+      n_events_grouped: 8909
+    - part: 1120
+      label: photon20
+      p5: 18.86
+      p50: 21.724
+      n_events: 14000
+      n_events_grouped: 8967
+    - part: 1160
+      label: photon20
+      p5: 18.797
+      p50: 21.669
+      n_events: 13999
+      n_events_grouped: 8981
+    - part: 1200
+      label: photon20
+      p5: 18.829
+      p50: 21.719
+      n_events: 13999
+      n_events_grouped: 8991
+    - part: 1240
+      label: photon20
+      p5: 18.888
+      p50: 21.686
+      n_events: 13904
+      n_events_grouped: 8828
+    - part: 1280
+      label: photon20
+      p5: 18.766
+      p50: 21.688
+      n_events: 13999
+      n_events_grouped: 8950
+    - part: 1320
+      label: photon20
+      p5: 18.955
+      p50: 21.685
+      n_events: 13998
+      n_events_grouped: 8878
+    - part: 1360
+      label: photon20
+      p5: 18.833
+      p50: 21.7
+      n_events: 14000
+      n_events_grouped: 8950
+    - part: 1400
+      label: photon20
+      p5: 18.878
+      p50: 21.739
+      n_events: 13998
+      n_events_grouped: 8946
+    - part: 1433
+      label: photon20
+      p5: 18.746
+      p50: 21.659
+      n_events: 10872
+      n_events_grouped: 6925
+seconds: 1.4
