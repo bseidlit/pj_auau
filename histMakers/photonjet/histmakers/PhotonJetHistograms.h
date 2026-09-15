@@ -140,7 +140,7 @@ inline HistogramGrid BookHistograms(const Cuts &c, const BinLayout &bins, bool s
 {
     HistogramGrid histograms(bins.nCentrality());
     for (int centrality = 0; centrality < bins.nCentrality(); ++centrality) {
-        auto &row = histograms[centrality];
+        std::vector<HistogramSet> &row = histograms[centrality];
         row.reserve(bins.nEta());
         for (int eta = 0; eta < bins.nEta(); ++eta)
             row.push_back(BookHistogramSet(c, bins.cell(centrality, eta), signal));
@@ -155,19 +155,19 @@ inline void WriteHistogramObject(TObject &object)
 inline void WriteHistograms(TFile &main, TFile *response, const JobQA &q, const HistogramGrid &histograms)
 {
     TDirectory::TContext directory(&main);
-    for (auto *h : {q.cutflow.get(), q.flags.get(), q.vertex.get(), q.weight.get(), q.centrality.get(), q.run.get(), q.recipe.get()})
+    for (TH1D *h : {q.cutflow.get(), q.flags.get(), q.vertex.get(), q.weight.get(), q.centrality.get(), q.run.get(), q.recipe.get()})
         WriteHistogramObject(*h);
-    for (const auto &row : histograms) for (const auto &h : row) {
+    for (const std::vector<HistogramSet> &row : histograms) for (const HistogramSet &h : row) {
         main.cd();
-        for (auto *spectrum : {h.reco.all.get(), h.reco.common.get(), h.reco.tight.get(), h.reco.signal_all.get(), h.reco.signal_tight.get(),
+        for (TH1D *spectrum : {h.reco.all.get(), h.reco.common.get(), h.reco.tight.get(), h.reco.signal_all.get(), h.reco.signal_tight.get(),
                               h.truth.spectrum.get(), h.truth.novtx.get(), h.truth.vertexcut.get(), h.truth.mbd.get(), h.truth.north.get(),
                               h.truth.south.get(), h.truth.only_north.get(), h.truth.only_south.get(), h.truth.neither.get()})
             WriteHistogramObject(*spectrum);
         for (int region = 0; region < 4; ++region)
-            for (auto *spectrum : {h.reco.abcd[region].get(), h.reco.signal[region].get(), h.reco.unmatched[region].get()})
+            for (TH1D *spectrum : {h.reco.abcd[region].get(), h.reco.signal[region].get(), h.reco.unmatched[region].get()})
                 WriteHistogramObject(*spectrum);
         WriteHistogramObject(*h.qa.isolation); WriteHistogramObject(*h.qa.score);
-        for (auto *efficiency : {h.truth.reco.get(), h.truth.iso.get(), h.truth.id.get(), h.truth.all.get(), h.truth.converts.get()})
+        for (TEfficiency *efficiency : {h.truth.reco.get(), h.truth.iso.get(), h.truth.id.get(), h.truth.all.get(), h.truth.converts.get()})
             WriteHistogramObject(*efficiency);
         if (response) {
             response->cd();
@@ -200,13 +200,13 @@ inline void FinalizeMergedResponses(TFile &file, const Cuts &cuts)
     TDirectory::TContext directory(&file);
     const BinLayout bins(cuts);
     for (int centrality = 0; centrality < bins.nCentrality(); ++centrality) for (int eta = 0; eta < bins.nEta(); ++eta) {
-        const auto bin = bins.cell(centrality, eta);
+        const BinInfo bin = bins.cell(centrality, eta);
         auto *measured = dynamic_cast<TH1D *>(file.Get(bin.Name("h_pT_reco_response").c_str()));
         auto *truth = dynamic_cast<TH1D *>(file.Get(bin.Name("h_pT_truth_response").c_str()));
         auto *matrix = dynamic_cast<TH2D *>(file.Get(bin.Name("h_response_full").c_str()));
         if (!measured || !truth || !matrix) throw std::runtime_error("missing response histograms for cell " + bin.Name(""));
-        const auto name = bin.Name("response_matrix_full");
-        auto result = FinalizeResponse(*measured, *truth, *matrix, name, bin.single ? "" : bin.Title());
+        const std::string name = bin.Name("response_matrix_full");
+        std::unique_ptr<RooUnfoldResponse> result = FinalizeResponse(*measured, *truth, *matrix, name, bin.single ? "" : bin.Title());
         file.Delete((name + ";*").c_str());
         WriteHistogramObject(*result);
     }

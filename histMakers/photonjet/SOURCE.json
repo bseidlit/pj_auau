@@ -1,5 +1,7 @@
 {
   "source_commit": "638ddc8acb711a8f532a08567d8409755baa5912",
+  "copy_commit": "0f95772e2eccf31eeb5b8e844e8d21867d6ef7d3",
+  "hash_scope": "Historical import snapshot; subsequent changes are tracked in Git.",
   "files": [
     {
       "source": "efficiencytool/photonjet/.gitignore",

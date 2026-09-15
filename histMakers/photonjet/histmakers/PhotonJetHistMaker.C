@@ -14,15 +14,15 @@ inline void Run(const std::string &config_path, const std::string &product,
 {
     // ---- configuration and checked original inputs --------------------------
     const auto start = std::chrono::steady_clock::now();
-    const auto config = ReadConfig(config_path);
-    const auto kind = ParseProduct(product);
-    const auto cuts = LoadCuts(config.yaml);
+    const ConfigFile config = ReadConfig(config_path);
+    const Product kind = ParseProduct(product);
+    const Cuts cuts = LoadCuts(config.yaml);
     const BinLayout bins(cuts);
-    auto inputs = ReadInputs(chunk_list, config, kind, cuts);
+    Inputs inputs = ReadInputs(chunk_list, config, kind, cuts);
     if (!inputs.job_tag.empty() && tag != inputs.job_tag) throw std::runtime_error("chunk tag differs from sealed job plan");
-    const auto model = Configure(config, kind, inputs);
-    auto provenance = Provenance(config, kind, inputs, model);
-    const auto names = OutputPaths(config.yaml, kind, tag);
+    const Model model = Configure(config, kind, inputs);
+    YAML::Node provenance = Provenance(config, kind, inputs, model);
+    const OutputNames names = OutputPaths(config.yaml, kind, tag);
     CheckOutputDestinations(config, inputs, names);
     if (model.signal && OutputIdentityPath(names.main) == OutputIdentityPath(names.response))
         throw std::runtime_error("main and response destinations must differ");
@@ -38,8 +38,8 @@ inline void Run(const std::string &config_path, const std::string &product,
     const auto configured = std::chrono::steady_clock::now();
 
     // ---- histogram booking -------------------------------------------------
-    auto qa = BookJobQA(cuts);
-    auto histograms = BookHistograms(cuts, bins, model.signal);
+    JobQA qa = BookJobQA(cuts);
+    HistogramGrid histograms = BookHistograms(cuts, bins, model.signal);
     std::vector<ULong64_t> selected_by_centrality(bins.nCentrality(), 0);
     ULong64_t events_processed = 0;
     size_t parts_processed = 0;
@@ -50,11 +50,11 @@ inline void Run(const std::string &config_path, const std::string &product,
     };
 
     // ---- one original part at a time ---------------------------------------
-    for (const auto &part : inputs.originals) {
+    for (const ChunkEntry &part : inputs.originals) {
         const auto loading_start = std::chrono::steady_clock::now();
-        auto file = OpenRoot(part.path);
-        const auto data = LoadPart(*file, !model.simulation && cuts.system == "auau", model.simulation, cuts.system == "auau");
-        const auto &record = inputs.records[parts_processed];
+        std::unique_ptr<TFile> file = OpenRoot(part.path);
+        const PartData data = LoadPart(*file, !model.simulation && cuts.system == "auau", model.simulation, cuts.system == "auau");
+        const YAML::Node &record = inputs.records[parts_processed];
         if (data.events.size() != record["events"].as<size_t>() || data.photons.size() != record["photons"].as<size_t>() ||
             data.truths.size() != record["truth_photons"].as<size_t>() || data.link_rows != record["source_link_rows"].as<Long64_t>() ||
             data.jet_rows != record["truth_jet_rows"].as<Long64_t>() ||
@@ -64,15 +64,15 @@ inline void Run(const std::string &config_path, const std::string &product,
         file->Close();
         const auto loaded = std::chrono::steady_clock::now();
         loading_seconds += std::chrono::duration<double>(loaded - loading_start).count();
-        const auto &sample = model.samples.at(part.index);
+        const PPG12::SampleConfig &sample = model.samples.at(part.index);
 
         // ---- event selection and job-level accounting ----------------------
         for (size_t e = 0; e < data.events.size(); ++e) {
-            const auto &event = data.events[e];
-            const auto matches = MatchPhotons(data, e, model.simulation, use_links);
+            const Event &event = data.events[e];
+            const std::vector<int> matches = MatchPhotons(data, e, model.simulation, use_links);
             ++events_processed;
             qa.cutflow->Fill(.5);
-            const auto selected = SelectEvent(cuts, bins, model.simulation, sample, model.vertex, data, e);
+            const EventDecision selected = SelectEvent(cuts, bins, model.simulation, sample, model.vertex, data, e);
             if (!selected.pass) continue;
             const int icent = selected.centrality_bin;
             const double event_weight = selected.weight;
@@ -86,13 +86,13 @@ inline void Run(const std::string &config_path, const std::string &product,
             // ---- reco photons: the decision and its fills stay together -----
             std::vector<Candidate> candidates;
             candidates.reserve(data.reco_rows[e].size());
-            for (const auto row : data.reco_rows[e]) {
-                const auto &photon = data.photons[row];
+            for (const Long64_t row : data.reco_rows[e]) {
+                const Photon &photon = data.photons[row];
                 qa.cutflow->Fill(2.5);
-                auto candidate = SelectPhoton(photon, cuts, bins, model.simulation, sample, event_weight, matches[photon.original_index]);
+                Candidate candidate = SelectPhoton(photon, cuts, bins, model.simulation, sample, event_weight, matches[photon.original_index]);
                 if (!candidate.accepted) continue;
-                auto &h = histograms[icent][candidate.eta_bin];
-                const auto &d = candidate.decision;
+                HistogramSet &h = histograms[icent][candidate.eta_bin];
+                const Decision &d = candidate.decision;
                 const double photon_weight = candidate.weight;
                 qa.cutflow->Fill(3.5);
                 if (cuts.system == "auau")
@@ -117,11 +117,11 @@ inline void Run(const std::string &config_path, const std::string &product,
             if (!model.simulation) continue;
 
             // ---- truth, efficiencies and response: each truth counted once --
-            for (const auto row : data.truth_rows[e]) {
-                const auto &truth = data.truths[row];
+            for (const Long64_t row : data.truth_rows[e]) {
+                const TruthPhoton &truth = data.truths[row];
                 const int ieta = bins.EtaBin(truth.truth_photon_eta);
                 if (ieta < 0 || !IsFiducialTruth(truth, cuts)) continue;
-                auto &h = histograms[icent][ieta];
+                HistogramSet &h = histograms[icent][ieta];
                 const double pt = truth.truth_photon_pt;
                 qa.cutflow->Fill(10.5);
                 h.truth.spectrum->Fill(pt, event_weight);
@@ -131,11 +131,11 @@ inline void Run(const std::string &config_path, const std::string &product,
                 h.truth.north->Fill(pt, event_weight);
                 h.truth.south->Fill(pt, event_weight);
                 bool reconstructed = false, isolated = false, tight_isolated = false;
-                for (auto &candidate : candidates) {
+                for (Candidate &candidate : candidates) {
                     if (candidate.truth_index != truth.original_index || candidate.eta_bin != ieta) continue;
                     candidate.matched_to_fiducial = true;
                     reconstructed = true;
-                    const auto &d = candidate.decision;
+                    const Decision &d = candidate.decision;
                     isolated |= d.iso_pass;
                     tight_isolated |= d.tight && d.iso_pass;
                     if (pt > cuts.pT_bins_truth.front() && pt < cuts.pT_bins_truth.back() &&
@@ -145,7 +145,7 @@ inline void Run(const std::string &config_path, const std::string &product,
                         if (d.region >= 0) h.reco.signal[d.region]->Fill(d.et, event_weight);
                     }
                     if (model.signal) {
-                        const auto point = MakeResponse(cuts, candidate, truth, event, inputs.ids.at(part.index), event_weight, prior);
+                        const ResponsePoint point = MakeResponse(cuts, candidate, truth, event, inputs.ids.at(part.index), event_weight, prior);
                         if (!point.accepted) continue;
                         const double response_weight = point.weight;
                         h.response.reco->Fill(point.reco, response_weight);
@@ -166,8 +166,8 @@ inline void Run(const std::string &config_path, const std::string &product,
                     if (isolated) h.truth.id->FillWeighted(tight_isolated, event_weight, pt);
                 }
             }
-            for (const auto &candidate : candidates) {
-                const auto &d = candidate.decision;
+            for (const Candidate &candidate : candidates) {
+                const Decision &d = candidate.decision;
                 if (!candidate.matched_to_fiducial && d.region >= 0)
                     histograms[icent][candidate.eta_bin].reco.unmatched[d.region]->Fill(d.et, candidate.weight);
             }

@@ -3,7 +3,9 @@
 This is an additive copy of `efficiencytool/photonjet` and its required shared
 helpers from PPG12 commit `638ddc8acb711a8f532a08567d8409755baa5912` on
 `PPG12-2-simplify-histogram-maker` (2026-09-15). Source files and their hashes are
-listed in [SOURCE.json](SOURCE.json). The original PPG12 checkout is retained.
+listed in [SOURCE.json](SOURCE.json) for the import snapshot at copy commit
+`0f95772e2eccf31eeb5b8e844e8d21867d6ef7d3`; later changes are tracked in Git.
+The original PPG12 checkout is retained.
 The target baseline is pj_auau main `a9a9ea125ac54d5c2b609a40dad59cb12b755074`.
 
 ## Relocation changes
@@ -22,7 +24,7 @@ RNG are unchanged. External scientific data retain their original identities;
 no calibration or normalization is substituted during relocation. AuAu final
 normalization remains outside the pp yield command's supported scope.
 
-## Validation
+## Import validation
 
 At clean copy commit `957b532d11191af062a717d46e626b919b6c8872`, using ROOT 6.32.06,
 RooUnfold 3.1.0 and Python 3.13.0:
@@ -40,9 +42,17 @@ RooUnfold 3.1.0 and Python 3.13.0:
 - All pre-existing pj_auau files remained unchanged. The checkpoint closed with
   zero changed dependencies; private checkpoint files are excluded from this copy.
 
-The event loop, reader, histogram booking, configuration implementation and cross-
-section helper match the source byte for byte. The physics helper differs only in
-its include path to the bundled cross-section helper. The source had separately
+At the import revision, the event loop, reader, histogram booking, configuration
+implementation and cross-section helper matched the source byte for byte. The
+physics helper differed only in its include path to the bundled cross-section helper. The source had separately
 passed broader real-input and exact response RNG comparisons before copying.
 These checks establish bounded equivalence, not full-release throughput or AuAu
 final-normalization validation.
+
+## Readability follow-up
+
+Production histogram code now spells out analysis records, histogram collections,
+selection/response results and ROOT ownership types where they explain the local
+code. Lambdas, iterators and declarations with obvious types retain `auto`. This
+changes type spelling only, preserving const/reference qualifiers and ownership.
+The hashes in SOURCE.json continue to describe the import snapshot above.

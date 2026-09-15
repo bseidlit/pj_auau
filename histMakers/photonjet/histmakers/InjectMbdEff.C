@@ -13,7 +13,7 @@ namespace PJ
 inline void InjectCorrection(const std::string &configname, const std::string &target_override = "")
 {
     const PJ::ConfigFile config = PJ::ReadConfig(configname);
-    const auto &cfg = config.yaml;
+    const YAML::Node &cfg = config.yaml;
     RequireSingleCellLayout(BinLayout(LoadCuts(cfg)).Metadata(), "MBD injection");
     const std::string source = PJ::Y<std::string>(cfg["photonjet"], "external_mbd_eff_file", "");
     if (source.empty())
@@ -23,20 +23,20 @@ inline void InjectCorrection(const std::string &configname, const std::string &t
     }
     const std::string target = target_override.empty() ? PJ::MainOutputPath(cfg, PJ::Product::Signal) : target_override;
     const auto source_digest = PJ::FileDigest(source);
-    auto fs = PJ::OpenRoot(source);
-    auto original = PJ::OpenRoot(target); // READ must succeed; never create a missing merged target.
-    for (auto *file : {fs.get(), original.get()})
+    std::unique_ptr<TFile> fs = PJ::OpenRoot(source);
+    std::unique_ptr<TFile> original = PJ::OpenRoot(target); // READ must succeed; never create a missing merged target.
+    for (TFile *file : {fs.get(), original.get()})
         if (auto *saved = dynamic_cast<TObjString *>(file->Get("photonjet_provenance"))) {
             const auto info = YAML::Load(saved->GetString().Data());
             if (info["layout"]) RequireSingleCellLayout(info["layout"], "MBD injection");
         }
     if (std::filesystem::equivalent(source, target)) throw std::runtime_error("MBD source and target must differ");
-    const auto edges = PJ::YV<double>(cfg["analysis"], "pT_bins_truth");
+    const std::vector<double> edges = PJ::YV<double>(cfg["analysis"], "pT_bins_truth");
     PJ::ValidateEdges(edges, "pT_bins_truth");
     std::vector<std::unique_ptr<TH1>> replacements;
-    for (const auto &name : PJ::MbdHistogramNames())
+    for (const std::string &name : PJ::MbdHistogramNames())
     {
-        auto *source_hist = PJ::RequireHistogram(fs.get(), name, edges);
+        TH1 *source_hist = PJ::RequireHistogram(fs.get(), name, edges);
         PJ::RequireHistogram(original.get(), name, edges);
         replacements.emplace_back(static_cast<TH1 *>(source_hist->Clone(name.c_str())));
         replacements.back()->SetDirectory(nullptr);
@@ -75,7 +75,7 @@ inline void InjectCorrection(const std::string &configname, const std::string &t
     original.reset();
 
     PJ::RootOutput output(target, true);
-    for (auto &hist : replacements)
+    for (std::unique_ptr<TH1> &hist : replacements)
     {
         output.get()->cd();
         output.get()->Delete((std::string(hist->GetName()) + ";*").c_str());

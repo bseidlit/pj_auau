@@ -139,7 +139,7 @@ inline std::vector<ChunkEntry> ReadParts(const std::string &path, bool master_li
 inline std::string InputManifest(const std::vector<ChunkEntry> &parts)
 {
     std::ostringstream text;
-    for (const auto &part : parts) text << part.index << ' ' << part.path << '\n';
+    for (const ChunkEntry &part : parts) text << part.index << ' ' << part.path << '\n';
     return text.str();
 }
 
@@ -330,7 +330,7 @@ inline SourceStat StatOriginal(const std::string &path) {
 }
 inline void CheckOriginalStat(const YAML::Node &record) {
     const auto path = record["source_path"].as<std::string>();
-    const auto current = StatOriginal(path);
+    const SourceStat current = StatOriginal(path);
     if (current.bytes != record["source_bytes"].as<uintmax_t>() ||
         current.mtime_ns != record["source_mtime_ns"].as<int64_t>())
         throw std::runtime_error("original source size or timestamp changed: " + path);
@@ -352,7 +352,7 @@ inline YAML::Node ReadCheckedPlan(const std::string &path, const ConfigFile &con
         plan["config_md5"].as<std::string>() != FileDigest(config.path) ||
         !LayoutMatches(plan["layout"], BinLayout(LoadCuts(config.yaml)).Metadata()))
         throw std::runtime_error("incompatible or stale job plan; regenerate chunks");
-    const auto code = CodeDigests();
+    const YAML::Node code = CodeDigests();
     if (plan["code"].size() != code.size()) throw std::runtime_error("job plan source inventory differs");
     for (const auto &entry : code)
         if (plan["code"][entry.first.as<std::string>()].as<std::string>() != entry.second.as<std::string>())
@@ -360,8 +360,8 @@ inline YAML::Node ReadCheckedPlan(const std::string &path, const ConfigFile &con
     for (const auto &entry : plan["list_md5"])
         if (FileDigest(entry.first.as<std::string>()) != entry.second.as<std::string>())
             throw std::runtime_error("job list changed since planning");
-    const auto product = plan["products"][ProductName(kind)];
-    const auto master = RequiredString(config.yaml["photonjet"], InputListKey(kind));
+    const YAML::Node product = plan["products"][ProductName(kind)];
+    const std::string master = RequiredString(config.yaml["photonjet"], InputListKey(kind));
     if (product["master_md5"].as<std::string>() != FileDigest(master) ||
         !std::filesystem::equivalent(product["master"].as<std::string>(), master))
         throw std::runtime_error("master list changed since planning");
@@ -374,13 +374,13 @@ inline YAML::Node InspectOriginal(const ChunkEntry &part, const std::string &id,
     YAML::Node record;
     record["original_part_index"] = part.index; record["original_part_id"] = id;
     record["source_path"] = part.path;
-    const auto stat = StatOriginal(part.path);
+    const SourceStat stat = StatOriginal(part.path);
     record["source_bytes"] = stat.bytes; record["source_mtime_ns"] = stat.mtime_ns;
     record["source_md5"] = FileDigest(part.path);
-    auto file = OpenRoot(part.path);
+    std::unique_ptr<TFile> file = OpenRoot(part.path);
     record["source_uuid"] = file->GetUUID().AsString();
     auto count = [&](const char *name, bool required) -> Long64_t {
-        auto *object = file->Get(name);
+        TObject *object = file->Get(name);
         auto *tree = dynamic_cast<TTree *>(object);
         if ((required && !tree) || (object && !tree))
             throw std::runtime_error(std::string("missing or wrong-type original tree ") + name + ": " + part.path);
@@ -404,8 +404,8 @@ inline void CheckOriginalContents(const YAML::Node &record) {
 }
 inline Inputs ReadInputs(const std::string &requested, const ConfigFile &config, Product kind, const Cuts &cuts) {
     Inputs out;
-    const auto master = RequiredString(config.yaml["photonjet"], InputListKey(kind));
-    const auto master_parts = ReadParts(master, true);
+    const std::string master = RequiredString(config.yaml["photonjet"], InputListKey(kind));
+    const std::vector<ChunkEntry> master_parts = ReadParts(master, true);
     for (size_t i=0; i<master_parts.size(); ++i)
         if (master_parts[i].index != int(i) || !std::filesystem::path(master_parts[i].path).is_absolute())
             throw std::runtime_error("master list needs canonical zero-based indices and absolute original paths");
@@ -413,7 +413,7 @@ inline Inputs ReadInputs(const std::string &requested, const ConfigFile &config,
     if (std::filesystem::path(path).extension() == ".json")
         throw std::runtime_error("prepared manifests are retired; provide an indexed original ROOT list");
     const bool use_master = std::filesystem::equivalent(path, master);
-    auto selected = ReadParts(path, use_master);
+    std::vector<ChunkEntry> selected = ReadParts(path, use_master);
     out.product = ReleaseProduct(kind, cuts.system);
     const char *release_override = gSystem->Getenv("PJ_RELEASE_ID");
     out.release = release_override && *release_override ? release_override :
@@ -425,8 +425,8 @@ inline Inputs ReadInputs(const std::string &requested, const ConfigFile &config,
     YAML::Node assignment(YAML::NodeType::Undefined);
     const auto plan_path = std::filesystem::path(path).parent_path() / "jobs.json";
     if (!use_master && std::filesystem::exists(plan_path)) {
-        const auto plan = ReadCheckedPlan(plan_path.string(), config, kind);
-        const auto product_plan = plan["products"][ProductName(kind)];
+        const YAML::Node plan = ReadCheckedPlan(plan_path.string(), config, kind);
+        const YAML::Node product_plan = plan["products"][ProductName(kind)];
         for (const auto &dependency : product_plan["dependencies"])
             out.dependencies[dependency.first.as<std::string>()] = dependency.second;
         for (const auto &job : product_plan["jobs"])
@@ -445,7 +445,7 @@ inline Inputs ReadInputs(const std::string &requested, const ConfigFile &config,
     }
     ValidateLabel(out.release, "release identity");
     std::set<std::string> uuids, canonical_paths;
-    for (auto part : selected) {
+    for (ChunkEntry part : selected) {
         if (part.index < 0 || part.index >= int(master_parts.size()) || master_parts[part.index].index != part.index ||
             std::filesystem::weakly_canonical(part.path) != std::filesystem::weakly_canonical(master_parts[part.index].path))
             throw std::runtime_error("input must use canonical original indices and paths from its master list");
@@ -460,7 +460,7 @@ inline Inputs ReadInputs(const std::string &requested, const ConfigFile &config,
             }
             if (matches != 1) throw std::runtime_error("input is not uniquely assigned in job plan");
         }
-        const auto record = InspectOriginal(part, id, kind != Product::Data);
+        const YAML::Node record = InspectOriginal(part, id, kind != Product::Data);
         if (!uuids.insert(record["source_uuid"].as<std::string>()).second) throw std::runtime_error("duplicate original ROOT UUID");
         if (kind != Product::Data && cuts.match_source == "links" && !record["links_available"].as<bool>())
             throw std::runtime_error("requested photon links are unavailable");
@@ -493,13 +493,13 @@ inline Model Configure(const PJ::ConfigFile &config, PJ::Product kind, Inputs &i
             throw std::runtime_error("dependency changed before configuration");
     Model model{}; model.cuts = PJ::LoadCuts(config.yaml);
     model.simulation = kind != PJ::Product::Data; model.signal = kind == PJ::Product::Signal;
-    const auto &c = model.cuts;
+    const Cuts &c = model.cuts;
     if (model.simulation && c.system == "auau" && c.weight_mode != "sample_map")
         throw std::runtime_error("Au+Au simulation requires sample_map weights");
     const bool need_sample = model.simulation && c.weight_mode != "stored";
     if (!c.run_list_file.empty()) RecordDependency(inputs, c.run_list_file);
     std::string sample_path = c.sample_map_file;
-    const auto override = config.yaml["photonjet"][model.signal ? "sample_map_signal" : "sample_map_inclusive"];
+    const YAML::Node override = config.yaml["photonjet"][model.signal ? "sample_map_signal" : "sample_map_inclusive"];
     if (model.simulation && override) sample_path = override.as<std::string>();
     YAML::Node ranges;
     if (need_sample) {
@@ -515,7 +515,7 @@ inline Model Configure(const PJ::ConfigFile &config, PJ::Product kind, Inputs &i
         }
         if (!c.vertex_weight_file.empty()) {
             RecordDependency(inputs, c.vertex_weight_file);
-            auto file = OpenRoot(c.vertex_weight_file);
+            std::unique_ptr<TFile> file = OpenRoot(c.vertex_weight_file);
             auto *h = dynamic_cast<TH1 *>(file->Get("h_vertex_reweight"));
             if (!h || h->GetDimension() != 1) throw std::runtime_error("missing or invalid vertex histogram");
             for (int i=1; i<=h->GetNbinsX(); ++i) { model.vertex.edges.push_back(h->GetXaxis()->GetBinLowEdge(i)); model.vertex.weights.push_back(h->GetBinContent(i)); }
@@ -542,7 +542,7 @@ inline Model Configure(const PJ::ConfigFile &config, PJ::Product kind, Inputs &i
     return model;
 }
 inline YAML::Node Provenance(const PJ::ConfigFile &config, PJ::Product kind, const Inputs &inputs, const Model &model) {
-    const auto &c = model.cuts;
+    const Cuts &c = model.cuts;
     YAML::Node info;
     info["format_version"] = ProvenanceFormatVersion; info["input_verification"] = InputVerification; info["backend"] = BackendVersion; info["schema_version"] = OriginalSchemaVersion;
     info["rng_version"] = RNGVersion;
@@ -576,7 +576,7 @@ inline void CheckOutputDestinations(const ConfigFile &config, const Inputs &inpu
     for (size_t i=0; i<destinations.size(); ++i) for (size_t j=0; j<i; ++j)
         if (SameDestination(destinations[i], destinations[j])) throw std::runtime_error("output destinations must differ");
     std::vector<std::string> protected_paths{config.path};
-    for (const auto &part : inputs.originals) protected_paths.push_back(part.path);
+    for (const ChunkEntry &part : inputs.originals) protected_paths.push_back(part.path);
     for (const auto &dependency : inputs.dependencies) protected_paths.push_back(dependency.first.as<std::string>());
     const auto mbd = Y<std::string>(config.yaml["photonjet"], "external_mbd_eff_file", "");
     if (!mbd.empty()) protected_paths.push_back(mbd);
@@ -587,7 +587,7 @@ inline void CheckOutputDestinations(const ConfigFile &config, const Inputs &inpu
     // Check configured product outputs when those products are configured. A
     // data-only direct config need not supply unrelated simulation output keys.
     std::vector<std::string> product_outputs;
-    const auto output = config.yaml["output"];
+    const YAML::Node output = config.yaml["output"];
     if (!Y<std::string>(output, "data_outfile", "").empty())
         product_outputs.push_back(MainOutputPath(config.yaml, Product::Data));
     if (!Y<std::string>(output, "eff_outfile", "").empty()) {
@@ -611,7 +611,7 @@ inline void Publish(PJ::RootOutput &main, PJ::RootOutput *response, const PJ::Ou
     for (const auto &part : provenance["inputs"]) marker["original_part_ids"].push_back(part["original_part_id"]);
     auto record = [&](PJ::RootOutput &output, const std::string &path, const std::string &kind) {
         const std::string temp = output.get()->GetName();
-        auto file = OpenRoot(temp);
+        std::unique_ptr<TFile> file = OpenRoot(temp);
         for (const char *key : {"config", "photonjet_provenance", "input_manifest", "h_pj_input_parts"})
             if (!file->Get(key)) throw std::runtime_error(std::string("missing output metadata ") + key);
         const int cells = provenance["layout"]["n_centrality"].as<int>() * provenance["layout"]["n_eta"].as<int>();
@@ -642,18 +642,18 @@ inline void CheckPlanBinding(const YAML::Node &info, const ConfigFile &config, P
                              const std::string &main_path) {
     const auto stage = info["stage"].as<std::string>();
     if (stage != "histograms" && stage != "merged") throw std::runtime_error("unknown histogram stage");
-    const auto binding = info["job_plan"];
+    const YAML::Node binding = info["job_plan"];
     if (!binding) {
         if (stage == "merged") throw std::runtime_error("merged output has no job plan binding");
         return; // A direct unplanned macro invocation is also supported.
     }
     const auto path = binding["path"].as<std::string>();
     if (FileDigest(path) != binding["md5"].as<std::string>()) throw std::runtime_error("published job plan changed");
-    const auto plan = ReadCheckedPlan(path, config, kind);
+    const YAML::Node plan = ReadCheckedPlan(path, config, kind);
     if (plan["release_id"].as<std::string>() != info["release_id"].as<std::string>())
         throw std::runtime_error("published release differs from job plan");
-    const auto jobs = plan["products"][ProductName(kind)]["jobs"];
-    const auto assignments = binding["assignments"];
+    const YAML::Node jobs = plan["products"][ProductName(kind)]["jobs"];
+    const YAML::Node assignments = binding["assignments"];
     if (!assignments.IsSequence() || assignments.size() == 0 ||
         (stage == "histograms" && assignments.size() != 1) ||
         (stage == "merged" && assignments.size() != jobs.size()))
@@ -694,13 +694,13 @@ inline YAML::Node CheckCompletion(const std::string &main_path, const PJ::Config
     if (marker["format_version"].as<int>() != CompletionFormatVersion ||
         marker["input_verification"].as<std::string>() != InputVerification || marker["backend"].as<std::string>() != BackendVersion ||
         marker["product"].as<std::string>() != PJ::ProductName(product)) throw std::runtime_error("incompatible completion marker");
-    const auto layout = BinLayout(LoadCuts(config.yaml)).Metadata();
+    const YAML::Node layout = BinLayout(LoadCuts(config.yaml)).Metadata();
     if (!LayoutMatches(marker["layout"], layout)) throw std::runtime_error("completion histogram layout differs");
     const std::set<std::string> kinds = product == PJ::Product::Signal ? std::set<std::string>{"main","response"} : std::set<std::string>{"main"};
     std::set<std::string> seen_kinds, seen_paths;
     YAML::Node main_info;
     std::string common_provenance;
-    const auto code = CodeDigests();
+    const YAML::Node code = CodeDigests();
     for (const auto &entry : marker["files"]) {
         const auto kind = entry["kind"].as<std::string>(), path = entry["path"].as<std::string>();
         if (!kinds.count(kind) || !seen_kinds.insert(kind).second || !seen_paths.insert(OutputIdentityPath(path).string()).second ||
@@ -708,7 +708,7 @@ inline YAML::Node CheckCompletion(const std::string &main_path, const PJ::Config
             throw std::runtime_error("invalid completion file membership");
         if (std::filesystem::file_size(path) != entry["bytes"].as<uintmax_t>() || PJ::FileDigest(path) != entry["md5"].as<std::string>())
             throw std::runtime_error("published file fingerprint mismatch: " + path);
-        auto file = OpenRoot(path);
+        std::unique_ptr<TFile> file = OpenRoot(path);
         if (file->GetUUID().AsString() != entry["ROOT_UUID"].as<std::string>()) throw std::runtime_error("published ROOT UUID mismatch");
         auto *saved = dynamic_cast<TObjString *>(file->Get("config"));
         auto *record = dynamic_cast<TObjString *>(file->Get("photonjet_provenance"));
@@ -767,7 +767,7 @@ inline YAML::Node CheckCompletion(const std::string &main_path, const PJ::Config
             info["parts_processed"].as<size_t>() != ids.size()) throw std::runtime_error("incomplete serial processing accounting");
         const auto selected = info["selected_events_by_centrality"].as<std::vector<ULong64_t>>();
         ULong64_t selected_total = 0;
-        for (auto count : selected) selected_total += count;
+        for (ULong64_t count : selected) selected_total += count;
         if (selected.size() != size_t(layout["n_centrality"].as<int>()) || selected_total > expected_events ||
             !info["event_loops"] || info["event_loops"].as<ULong64_t>() == 0 ||
             (info["stage"].as<std::string>() == "histograms" && info["event_loops"].as<ULong64_t>() != 1))

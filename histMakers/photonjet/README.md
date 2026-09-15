@@ -101,6 +101,11 @@ collisions and complete processing before publication.
 
 ## Code structure
 
+Use explicit analysis types such as `Event`, `Candidate`, `HistogramSet` and
+`HistogramGrid` when the declaration helps explain the code. Keep `auto` for
+lambdas, iterators and types already visible in a cast or `std::make_unique<T>`.
+Preserve `const`, references and smart-pointer ownership when changing declarations.
+
 | File | Responsibility |
 | --- | --- |
 | [`histmakers/PhotonJetHistMaker.C`](histmakers/PhotonJetHistMaker.C) | Configuration, booking, visible event/reco/truth loops, direct ROOT fills and publication |

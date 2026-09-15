@@ -81,7 +81,7 @@ struct PartData {
 namespace ReaderDetail {
 inline TTree *Tree(TFile &file, const char *name, bool required = true)
 {
-    auto *object = file.Get(name);
+    TObject *object = file.Get(name);
     auto *tree = dynamic_cast<TTree *>(object);
     if ((!tree && required) || (object && !tree))
         throw std::runtime_error(std::string("missing or wrong-type tree ") + name + " in " + file.GetName());
@@ -96,7 +96,7 @@ struct ResetBranches {
 template<class T>
 inline void Bind(TTree &tree, const char *name, T &value, const char *type, bool required = true)
 {
-    auto *leaf = tree.GetLeaf(name);
+    TLeaf *leaf = tree.GetLeaf(name);
     if (!leaf && !required && !tree.GetBranch(name)) return;
     if (!leaf || std::string(leaf->GetTypeName()) != type || leaf->GetLeafCount() || leaf->GetLenStatic() != 1 ||
         leaf->GetBranch()->GetListOfLeaves()->GetEntries() != 1)
@@ -156,7 +156,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
     if (file.IsZombie() || file.TestBit(TFile::kRecovered))
         throw std::runtime_error(std::string("corrupt or recovered ROOT file: ") + file.GetName());
     PartData data;
-    auto *events = Tree(file, "events");
+    TTree *events = Tree(file, "events");
     ResetBranches reset_events{events};
     Event event;
     BindEvent(*events, event, require_mb);
@@ -168,11 +168,11 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
         data.events.push_back(event);
     }
     events->ResetBranchAddresses();
-    const auto n = data.events.size();
+    const size_t n = data.events.size();
     data.reco_rows.resize(n); data.truth_rows.resize(n); data.links.resize(n);
     data.leading_jet.assign(n, 0); data.jet_count.assign(n, 0);
 
-    auto *photons = Tree(file, "photons");
+    TTree *photons = Tree(file, "photons");
     ResetBranches reset_photons{photons};
     Event event_copy;
     Photon photon;
@@ -201,7 +201,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
     std::set<std::tuple<EventKey, ULong64_t, ULong64_t>> candidate_ids;
     for (Long64_t i = 0; i < photons->GetEntries(); ++i) {
         Read(*photons, i);
-        const auto e = EventIndex(data, event_copy, "photon");
+        const size_t e = EventIndex(data, event_copy, "photon");
         CheckEventCopy(data.events[e], event_copy);
         static_cast<Identity &>(photon) = event_copy;
         if (!candidate_ids.emplace(photon.key(), photon.candidate_id_hi, photon.candidate_id_lo).second)
@@ -217,7 +217,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
     }
     photons->ResetBranchAddresses();
 
-    auto *truths = Tree(file, "truthPhotons", simulation);
+    TTree *truths = Tree(file, "truthPhotons", simulation);
     ResetBranches reset_truths{truths};
     if (truths) {
         TruthPhoton truth;
@@ -233,7 +233,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
         std::set<std::tuple<EventKey, ULong64_t, ULong64_t>> truth_ids;
         for (Long64_t i = 0; i < truths->GetEntries(); ++i) {
             Read(*truths, i);
-            const auto e = EventIndex(data, truth, "truth photon");
+            const size_t e = EventIndex(data, truth, "truth photon");
             if (!truth_ids.emplace(truth.key(), truth.truth_photon_id_hi, truth.truth_photon_id_lo).second)
                 throw std::runtime_error("duplicate truth identity within an event");
             truth.original_index = ObjectIndex(data.truth_rows[e].size());
@@ -245,7 +245,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
 
     // Stream side trees without retaining their rows. Check every event key,
     // even for link classes unused by this histogram analysis.
-    auto *links = Tree(file, "recoTruthLinks", false);
+    TTree *links = Tree(file, "recoTruthLinks", false);
     ResetBranches reset_links{links};
     data.links_available = links != nullptr;
     if (links) {
@@ -262,12 +262,12 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
         data.link_rows = links->GetEntries();
         for (Long64_t i = 0; i < data.link_rows; ++i) {
             Read(*links, i);
-            const auto e = EventIndex(data, key, "link");
+            const size_t e = EventIndex(data, key, "link");
             if (reco_type != 1 || truth_type != 1 || link_class != 0) continue;
             if (reco_index < 0 || truth_index < 0 || reco_index >= static_cast<Long64_t>(data.reco_rows[e].size()) ||
                 truth_index >= static_cast<Long64_t>(data.truth_rows[e].size())) throw std::runtime_error("invalid photon link index");
-            const auto &reco = data.photons[data.reco_rows[e][reco_index]];
-            const auto &truth = data.truths[data.truth_rows[e][truth_index]];
+            const Photon &reco = data.photons[data.reco_rows[e][reco_index]];
+            const TruthPhoton &truth = data.truths[data.truth_rows[e][truth_index]];
             if (reco.candidate_id_hi != reco_id_hi || reco.candidate_id_lo != reco_id_lo ||
                 truth.truth_photon_id_hi != truth_id_hi || truth.truth_photon_id_lo != truth_id_lo)
                 throw std::runtime_error("photon link index/identity disagreement");
@@ -277,7 +277,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
         }
         links->ResetBranchAddresses();
     }
-    auto *jets = Tree(file, "truthJets", false);
+    TTree *jets = Tree(file, "truthJets", false);
     ResetBranches reset_jets{jets};
     data.jets_available = jets != nullptr;
     if (jets) {
@@ -288,7 +288,7 @@ inline PartData LoadPart(TFile &file, bool require_mb, bool simulation, bool aua
         data.jet_rows = jets->GetEntries();
         for (Long64_t i = 0; i < data.jet_rows; ++i) {
             Read(*jets, i);
-            const auto e = EventIndex(data, key, "truth jet");
+            const size_t e = EventIndex(data, key, "truth jet");
             if (!std::isfinite(pt)) throw std::runtime_error("nonfinite truth jet pT");
             if (!data.jet_count[e] || pt > data.leading_jet[e]) data.leading_jet[e] = pt;
             ++data.jet_count[e];

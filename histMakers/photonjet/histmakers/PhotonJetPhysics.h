@@ -217,7 +217,7 @@ struct VertexTable {
         if (weights.empty()) return 1.;
         auto bin = std::upper_bound(edges.begin(), edges.end(), z) - edges.begin() - 1;
         bin = std::max<decltype(bin)>(0, std::min<decltype(bin)>(weights.size() - 1, bin));
-        const auto weight = weights[bin];
+        const double weight = weights[bin];
         if (!std::isfinite(weight) || weight <= 0) throw std::runtime_error("invalid vertex weight");
         return weight;
     }
@@ -227,7 +227,7 @@ inline EventDecision SelectEvent(const Cuts &c, const BinLayout &bins, bool simu
                                 const PPG12::SampleConfig &sample, const VertexTable &vertex,
                                 const PartData &data, size_t event_index)
 {
-    const auto &event = data.events[event_index];
+    const Event &event = data.events[event_index];
     const double z = event.vertex_z, raw_weight = event.event_weight;
     if (simulation && (!std::isfinite(z) || !std::isfinite(raw_weight)))
         throw std::runtime_error("nonfinite simulation vertex or event weight");
@@ -253,8 +253,8 @@ inline EventDecision SelectEvent(const Cuts &c, const BinLayout &bins, bool simu
             if (data.jet_count[event_index] > 0) leading = std::max(0., data.leading_jet[event_index]);
             if (!(leading >= sample.jet_pt_lower && leading < sample.jet_pt_upper)) return {};
         } else {
-            for (const auto row : data.truth_rows[event_index]) {
-                const auto &truth = data.truths[row];
+            for (const Long64_t row : data.truth_rows[event_index]) {
+                const TruthPhoton &truth = data.truths[row];
                 if (truth.prompt_class == 1 || truth.prompt_class == 2) leading = std::max(leading, truth.truth_photon_pt);
             }
             if (!(leading >= sample.photon_pt_lower && leading < sample.photon_pt_upper)) return {};
@@ -269,12 +269,12 @@ inline EventDecision SelectEvent(const Cuts &c, const BinLayout &bins, bool simu
 // This validation runs before event selection, including for rejected events.
 inline std::vector<int> MatchPhotons(const PartData &data, size_t event, bool simulation, bool use_links)
 {
-    const auto &reco = data.reco_rows[event];
+    const std::vector<Long64_t> &reco = data.reco_rows[event];
     std::vector<int> match(reco.size(), -1);
     if (!simulation) return match;
     if (use_links) return data.links[event];
     std::map<int, int> barcodes;
-    const auto &truth = data.truth_rows[event];
+    const std::vector<Long64_t> &truth = data.truth_rows[event];
     for (size_t t = 0; t < truth.size(); ++t) {
         const int barcode = data.truths[truth[t]].generator_barcode;
         if (!barcodes.emplace(barcode, static_cast<int>(t)).second) barcodes[barcode] = -2;
@@ -309,7 +309,7 @@ inline Candidate SelectPhoton(const Photon &photon, const Cuts &c, const BinLayo
     if (et < c.reco_min_ET || eta < 0) return {};
     if (simulation && c.weight_mode != "stored" && sample.isbackground && et > sample.cluster_ET_upper) return {};
     const bool cone3 = c.use_topo_iso == 1;
-    const auto decision = Classify(c, simulation, et,
+    const Decision decision = Classify(c, simulation, et,
         {photon.weta, photon.wphi, photon.e11e33, photon.et1, photon.et2, photon.et3, photon.et4, photon.e32e35},
         photon.bdt_score, photon.bdt_tight_threshold, photon.bdt_nontight_low_threshold, photon.bdt_nontight_high_threshold,
         cone3 ? photon.iso_r03 : photon.iso_r04, cone3 ? photon.iso_r03_threshold : photon.iso_r04_threshold,
@@ -333,10 +333,10 @@ template<class Prior>
 inline ResponsePoint MakeResponse(const Cuts &c, const Candidate &candidate, const TruthPhoton &truth,
                                   const Event &event, const std::string &part, double event_weight, const Prior &prior)
 {
-    const auto &d = candidate.decision;
+    const Decision &d = candidate.decision;
     const double pt = truth.truth_photon_pt;
     if (!d.tight || !d.iso_pass || !(pt > c.pT_bins_truth.front() && pt < c.pT_bins_truth.back())) return {};
-    const auto seed = CandidateSeed(c.random_seed, part, event.source_file_index, event.event_id_hi, event.event_id_lo,
+    const std::uint64_t seed = CandidateSeed(c.random_seed, part, event.source_file_index, event.event_id_hi, event.event_id_lo,
                                     candidate.original_index);
     const double gaussian = Gaussian(seed), reco = ResponseET(c, d.et, pt, gaussian);
     if (!(reco > c.pT_bins.front() && reco < c.pT_bins.back())) return {};
