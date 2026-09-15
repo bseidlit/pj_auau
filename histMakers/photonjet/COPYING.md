@@ -24,5 +24,25 @@ normalization remains outside the pp yield command's supported scope.
 
 ## Validation
 
-Pending clean-checkout validation of this copy. The source passed 39 fixtures,
-14 exact numerical comparisons and four exact response audits before copying.
+At clean copy commit `957b532d11191af062a717d46e626b919b6c8872`, using ROOT 6.32.06,
+RooUnfold 3.1.0 and Python 3.13.0:
+
+- All 39 reader/physics/workflow fixtures passed in 95.484 seconds, including
+  centrality/eta grids, MBD, pp yield/closure, canonical RNG vectors and checksum
+  safety checks.
+- Six main/response histogram files matched saved source outputs exactly,
+  including values, errors, moments, axes and titles.
+- An actual Condor dry run generated six jobs with one CPU each. All six worker
+  arguments matched the planned config/product/list/tag, copied directory and
+  custom setup script. No jobs were submitted.
+- A shipped AuAu config planned successfully when the wrapper was invoked from
+  outside the package, using this copy's sample map.
+- All pre-existing pj_auau files remained unchanged. The checkpoint closed with
+  zero changed dependencies; private checkpoint files are excluded from this copy.
+
+The event loop, reader, histogram booking, configuration implementation and cross-
+section helper match the source byte for byte. The physics helper differs only in
+its include path to the bundled cross-section helper. The source had separately
+passed broader real-input and exact response RNG comparisons before copying.
+These checks establish bounded equivalence, not full-release throughput or AuAu
+final-normalization validation.
