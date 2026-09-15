@@ -56,3 +56,10 @@ selection/response results and ROOT ownership types where they explain the local
 code. Lambdas, iterators and declarations with obvious types retain `auto`. This
 changes type spelling only, preserving const/reference qualifiers and ownership.
 The hashes in SOURCE.json continue to describe the import snapshot above.
+
+At clean commit `cb80aade7c104fdf3f4730388cda270042ab1ede`, all 39 existing
+reader/physics/workflow fixtures passed in 99.074 seconds. Six main/response
+histogram comparisons against the saved import outputs matched exactly across
+359 objects, including axes, titles, contents, errors and moments. The source
+review confirmed 101 replacements limited to the `auto` token in six production
+files. The validation checkpoint closed with zero changed dependencies.
