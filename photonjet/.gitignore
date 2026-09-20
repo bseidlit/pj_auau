@@ -1,0 +1,8 @@
+# Built by make_lists.sh and by the jobs.
+/lists/
+/chunks/
+/logs/
+/output/
+*_C.so
+*_C.d
+*_ACLiC_dict_rdict.pcm

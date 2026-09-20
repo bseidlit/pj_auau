@@ -1,0 +1,13 @@
+universe = vanilla
+executable = $(photonjet_dir)/condor/run_photonjet_job.sh
+arguments = $(photonjet_dir) $(config) $(core) $(product) $(chunk_dir)/$(chunk).list $(chunk)
+output = $(photonjet_dir)/logs/$(core)_$(product)_$(Cluster)_$(chunk).out
+error = $(photonjet_dir)/logs/$(core)_$(product)_$(Cluster)_$(chunk).err
+log = /tmp/$ENV(USER)_photonjet_$(Cluster).log
+# Pool policy: no getenv; the job script initializes the environment.
+request_memory = 4GB
+request_disk = 5GB
+request_cpus = 1
+PeriodicHold = (NumJobStarts>=1 && JobStatus == 1)
+Notification = Never
+queue chunk from $(chunk_dir)/jobs.txt
