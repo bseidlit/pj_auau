@@ -1,0 +1,145 @@
+# PhotonJetTrees_v2 dated v21 exports. Build the part lists with make_lists.sh, see README.
+analysis:
+  apply_trigger_eff_correction: 1
+  bdt_fail: 0
+  bdt_on: 1
+  cluster_eres_data_p0: 0.15
+  cluster_eres_data_p1: 0.05
+  cluster_eres_data_p2: 0.05
+  cluster_eres_mc_p0: 0.185
+  cluster_eres_mc_p1: 0.0
+  cluster_eres_mc_p2: 0.04
+  cluster_escale: 1.0
+  cluster_escale_nl_ref_ET: 10.0
+  cluster_escale_nl_slope: 0.0
+  common:
+    cluster_weta_cogx_bound: 2.0
+    e11_over_e33_max: 0.98
+    e11_over_e33_min: 0.0
+    wr_cogx_bound: 0.0
+  e11_to_e33_fail: 0
+  e11_to_e33_on: 0
+  e32_to_e35_fail: 0
+  e32_to_e35_on: 0
+  et1_fail: 0
+  et1_on: 0
+  et2_on: 0
+  et3_on: 0
+  et4_on: 0
+  eta_bins: [-0.7, 0.7]
+  # Jets and x_Jgamma, the pj_auau reference keys: jet_cone_size 3 is R = 0.3.
+  jet_cone_size: 3
+  jet_eta: 0.8
+  b2bjet_pT_min: 8.0
+  b2bjet_dphi: 2.749
+  xjgamma_bins: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3]
+  xjgamma_bins_truth: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3]
+  mc_iso_scale: 1.2
+  mc_iso_shift: 0.1
+  n_nt_fail: 0
+  non_tight:
+    bdt_max: 0.5
+    bdt_max_intercept: 0.684375
+    bdt_max_slope: 0.0015625
+    bdt_min: 0.02
+    bdt_min_intercept: 0.7333333333333333
+    bdt_min_slope: -0.01333333333333333
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+    et1_max: 1.0
+    et1_min: 0.6
+    et4_max: 1.0
+    et4_min: 0.0
+    weta_cogx_max: 1.0
+    weta_cogx_min: 0.0
+    wphi_cogx_max: 1.0
+    wphi_cogx_min: 0.0
+  # EvtCharacter clusters: npb_score >= npb_score_cut.
+  npb_cut_on: 1
+  npb_score_cut: 0.5
+  pT_bins: [16, 18, 20, 22, 24, 26, 28, 32, 36]
+  pT_bins_truth: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 45]
+  reco_iso_max_b: 0.49
+  reco_iso_max_s: 0.037
+  reco_iso_min: -20.0
+  reco_min_ET: 5.0
+  reco_noniso_max: 20.0
+  reco_noniso_min_shift: 0.8
+  run_list_file: ''
+  run_max: 54000
+  run_min: 47289
+  tight:
+    bdt_max: 1.0
+    bdt_min: 0.7
+    bdt_min_intercept: 0.815625
+    bdt_min_slope: -0.0015625
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+    et1_max: 1.0
+    et1_min: 0.5
+    et1_min_b: 0.5
+    et1_min_s: 0.0
+    et2_max: 1.0
+    et2_min: 0.0
+    et3_max: 1.0
+    et3_min: 0.0
+    et4_max: 1.0
+    et4_min: 0.0
+    weta_cogx_max: 1.0
+    weta_cogx_max_b: 1.0
+    weta_cogx_max_s: 0.0
+    weta_cogx_min: 0.0
+    wphi_cogx_max: 1.0
+    wphi_cogx_max_b: 1.0
+    wphi_cogx_max_s: 0.0
+    wphi_cogx_min: 0.0
+  trigger_eff_beta: 3.33
+  trigger_eff_mu: -2.04
+  trigger_eff_p0: 1.0
+  trigger_used: 30
+  truth_iso_max: 4.0
+  unfold:
+    reweight: 1
+    truth_reweight:
+      clamp_pT_max: 30
+      clamp_pT_min: 10
+      formula: ([0] + [1]*x + [3]*x*x) / (1 + [2]*x + [4]*x*x)
+      params: [4.05592, -0.984728, -0.478818, 0.0723232, 0.0522681]
+      xmax: 100
+      xmin: 0
+  cone_size: 3
+  vertex_cut: 60.0
+  weta_fail: 0
+  weta_on: 1
+  wphi_fail: 0
+  wphi_on: 0
+output:
+  directory: output
+  var_type: pj_pp_nom
+photonjet:
+  apply_shower_shape_windows: 1
+  count_fragmentation_as_signal: 1
+  data_files_list: lists/pp_data.list
+  random_seed: 42
+  # Simulation weights as in PPG12: the sample cross section and truth-pT window from CrossSectionWeights.h,
+  # times, per run period, its luminosity fraction, its single-interaction fraction and our truth-vertex
+  # reweight. The producer's weight columns are not used.
+  sample_weights: 1
+  jet_input: towerinfo_calib
+  periods:
+    - name: 0mrad
+      lumi_fraction: 0.733358        # 47.2076 / 64.3718 pb^-1
+      single_fraction: 0.776         # 1 - 0.224 double-interaction fraction
+      truth_vertex_reweight_file: reweight/0mrad/reweight.root
+    - name: 1p5mrad
+      lumi_fraction: 0.266642        # 17.1642 / 64.3718 pb^-1
+      single_fraction: 0.921         # 1 - 0.079
+      truth_vertex_reweight_file: reweight/1p5mrad/reweight.root
+  sim_inclusive_files_list: lists/pp_sim_inclusive.list
+  sim_signal_files_list: lists/pp_sim_signal.list
+  system: pp
+  threshold_source: formula

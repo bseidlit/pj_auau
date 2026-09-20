@@ -1,0 +1,231 @@
+# Au+Au: the analysis block of pj_auau/histMakers/nom.yaml (bseidlit, a9a9ea1) with the marked changes,
+# and the photonjet and output blocks this code needs. Keys of the reference that this code does not
+# read are listed at start-up.
+output:
+  directory: output
+  var_type: pj_auau_nom
+photonjet:
+  system: auau
+  threshold_source: tree          # BDT thresholds stored in the tree
+  apply_shower_shape_windows: 0
+  count_fragmentation_as_signal: 1
+  random_seed: 42
+  jet_input: towerinfo_sub1       # the background-subtracted jets, the tree also holds towerinfo_retower_unsubtracted
+  sample_weights: 0               # no stored weights and no PPG12 sample table for the embedded samples yet: weight 1
+  data_files_list: lists/auau_data.list
+  sim_signal_files_list: lists/auau_sim_signal.list
+  sim_inclusive_files_list: lists/auau_sim_inclusive.list
+analysis:
+  isbackground: 0
+  eta_bins: [-0.7, 0.7]
+  vertex_cut: 30.0
+  # Run range of the data and axis of the per-run histograms, one bin per run. Not in the reference config.
+  run_min: 66000
+  run_max: 80000
+  # Response smearing for the data-simulation resolution difference, the PPG12 values.
+  cluster_eres_data_p0: 0.15
+  cluster_eres_data_p1: 0.05
+  cluster_eres_data_p2: 0.05
+  cluster_eres_mc_p0: 0.185
+  cluster_eres_mc_p1: 0.0
+  cluster_eres_mc_p2: 0.04
+  truth_iso_max: 4.0
+  #iso ET
+  cone_size: 3
+  reco_iso_min: -20.0
+  reco_iso_max_b: 3.0
+  reco_iso_max_s: 0.0299107
+  reco_iso_max_cent_coeff: [0,0,0]
+  reco_noniso_min_shift: 0.0
+  reco_noniso_max: 100.0
+  iso_threshold: 1
+  iso_hcalonly: 0
+  iso_emcalinnerr: 0.0
+  reco_min_ET: 9.0
+  eff_dR: 0.1
+  trigger_used: [22]   # reference: [12,30,22]. Photon 10 GeV + MBD only, decided 2026-09-17
+  pT_bins: [15, 20, 30]
+  pT_bins_truth:  [13,15,20,30,35]
+  centrality_bins: [0, 20, 50, 80]
+  xjgamma_bins: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3 ]
+  xjgamma_bins_truth: [0.0, 0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.7, 1.9, 2.3 ]
+  jet_cone_size: 3
+  b2bjet_pT_min: 8.0
+  b2bjet_dphi: 2.749
+  jet_eta: 0.8
+  # Non-physical background (NPB) veto (match RecoEffCalculator_TTreeReader.C)
+  npb_cut_on: 0
+  npb_weta_min: 0.4
+  # For ShowerShapeCheck: NPB bad-time uses cluster-MBD time (ns)
+  npb_delta_t_cut: -7.0 
+  vertex_reweight_on: 1
+  vertex_reweight_file: "../reweightingDer/output/vtxz_reweighting.root"
+  centrality_reweight_on: 1
+  centrality_reweight_file: "../reweightingDer/output/centrality_reweighting.root"
+
+  # Run-by-run MBD t0 correction (data only)
+  mbd_t0_correction_on: 0
+  mbd_t0_correction_file: "/sphenix/user/shuhangli/ppg12/efficiencytool/MbdOut.corr"
+
+  n_nt_fail: 0     # reference: 2. Placeholder photon ID by the tree's BDT thresholds, see photonjet.threshold_source
+  weta_fail: 0
+  wphi_fail: 0
+  et1_fail: 0
+  e11_to_e33_fail: 0
+  e32_to_e35_fail: 0
+  bdt_fail: 0
+  weta_on: 1
+  wphi_on: 1
+  et1_on: 1
+  e11_to_e33_on: 1
+  e32_to_e35_on: 1
+  bdt_on: 1        # reference: 0
+  npb_score_cut: 0.5
+
+  tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_min: 0.00
+    rhad33_max: 1.0
+
+    w72_min: 0.0
+    w72_max: 1.0
+
+    re11_E_min: 0.0
+    re11_E_max: 1.0
+
+    CNN_min: 0.0
+    CNN_max: 1.0
+
+    #correlation
+    et1_min: 0.5
+    et1_max: 1.0
+    et1_min_b: 0.80
+    et1_min_s: 0.0
+
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.9
+
+    #correlation
+    weta_cogx_max: 0.2
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 0.4
+    weta_cogx_max_s: 0.0
+
+
+    wphi_cogx_max: 2.0
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 0.6
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.2
+
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    et2_max: 1.0
+    et2_min: 0.0
+
+    et3_max: 1.0
+    et3_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 1.0
+    bdt_min: 0.0
+
+
+  non_tight:
+    reta77_min: 0.0
+    reta77_max: 1.0
+
+    rhad33_max: 1.0
+    rhad33_min: 0.00
+
+    w72_max: 1.0
+    w72_min: 0.0
+
+    re11_E_max: 1.0
+    re11_E_min: 0.0
+
+    CNN_max: 1.0
+    CNN_min: 0.0
+    #correlation
+    et1_max: 1.0
+    et1_min: 0.6
+    #correlation
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    #correlation
+    weta_cogx_max: 0.6
+    weta_cogx_min: 0.0
+    weta_cogx_max_b: 0.6
+    weta_cogx_max_s: 0.0
+
+    wphi_cogx_max: 0.8
+    wphi_cogx_min: 0.0
+    wphi_cogx_max_b: 1.8
+    wphi_cogx_max_s: 0.0
+
+    #correlation
+    prob_max: 1.0
+    prob_min: 0.0
+
+    #small correlation
+    e11_over_e33_max: 1.0
+    e11_over_e33_min: 0.0
+  
+    #small correlation
+    et4_max: 1.0
+    et4_min: 0.0
+
+    #w32 small correlation
+    w32_max: 1.0
+    w32_min: 0.0
+
+    #bdt
+    bdt_max: 1.0
+    bdt_min: 0.0
+
+  common:
+    wr_cogx_bound: 2.0
+    cluster_weta_cogx_bound: 2.0
+
+    prob_max: 1.0
+    prob_min: 0.0
+
+    e11_over_e33_max: 0.98
+    e11_over_e33_min: 0.0
+
+    e32_over_e35_max: 1.0
+    e32_over_e35_min: 0.8
+
+    et1_max: 1.0
+    et1_min: 0.6
+
+
+
+
+
+
+  unfold:
+    resultit: 2
+    resultleak: 1
+    reweight: 0
+
+
+
+
